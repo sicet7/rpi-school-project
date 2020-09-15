@@ -3,15 +3,16 @@
 namespace App;
 
 use App\Exceptions\BootstrappingException;
+use App\Interfaces\ActionFactoryInterface;
 use App\Interfaces\ActionInterface;
 use DI\ContainerBuilder;
 use Psr\Container\ContainerInterface;
 use Slim\App;
 use Slim\Factory\AppFactory;
 use Symfony\Component\Finder\Finder;
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
 use Symfony\Component\Finder\SplFileInfo;
+
+use function DI\factory;
 
 class Bootstrap
 {
@@ -64,50 +65,37 @@ class Bootstrap
      */
     private function loadRoutes(App $app): void
     {
-        $finder = Finder::create();
-        $finder->files()->in(__DIR__ . '/Controllers')->name('*Action.php');
-        if ($finder->hasResults()) {
-            foreach ($finder as $fileInfo) {
-                /** @var SplFileInfo $fileInof */
+        foreach ($this->getActionFqns() as $fqn) {
+            $methods = call_user_func([$fqn, 'getMethods']);
+            $pattern = call_user_func([$fqn, 'getPattern']);
+            $name = call_user_func([$fqn, 'getName']);
 
-                $fqn = 'App/Controllers/' . $fileInfo->getRelativePathname();
-                if (substr($fqn,-4) == '.php') {
-                    $fqn = substr($fqn, 0, (strlen($fqn)-4));
+            if (empty($methods)) {
+                throw new BootstrappingException(
+                    'Failed to load routes.' .
+                    'Empty methods array returned by: "' . $fqn . '::getMethods".'
+                );
+            }
+
+            array_walk($methods, function ($value, $key, $fqn) {
+                if (!is_string($value)) {
+                    throw new BootstrappingException(
+                        'Failed to load routes.' .
+                        'Non-string method in array returned by: "' . $fqn . '::getMethods".'
+                    );
                 }
-                $fqn = str_replace('/', '\\', $fqn);
-                if (is_subclass_of($fqn, ActionInterface::class, true)) {
-                    $methods = call_user_func([$fqn, 'getMethods']);
-                    $pattern = call_user_func([$fqn, 'getPattern']);
-                    $name = call_user_func([$fqn, 'getName']);
+            }, $fqn);
 
-                    if (empty($methods)) {
-                        throw new BootstrappingException(
-                            'Failed to load routes.' .
-                            'Empty methods array returned by: "' . $fqn . '::getMethods".'
-                        );
-                    }
+            if (!is_string($pattern)) {
+                throw new BootstrappingException(
+                    'Failed to load routes.' .
+                    'Non-string value return by: "' . $fqn . '::getPattern".'
+                );
+            }
 
-                    array_walk($methods, function ($value, $key, $fqn) {
-                        if (!is_string($value)) {
-                            throw new BootstrappingException(
-                                'Failed to load routes.' .
-                                'Non-string method in array returned by: "' . $fqn . '::getMethods".'
-                            );
-                        }
-                    }, $fqn);
-
-                    if (!is_string($pattern)) {
-                        throw new BootstrappingException(
-                            'Failed to load routes.' .
-                            'Non-string value return by: "' . $fqn . '::getPattern".'
-                        );
-                    }
-
-                    $route = $app->getRouteCollector()->map($methods, $pattern, $fqn);
-                    if (!empty($name) && is_string($name)) {
-                        $route->setName($name);
-                    }
-                }
+            $route = $app->map($methods, $pattern, $fqn);
+            if (!empty($name) && is_string($name)) {
+                $route->setName($name);
             }
         }
     }
@@ -120,6 +108,7 @@ class Bootstrap
     {
         $builder->useAnnotations(false);
         $builder->useAutowiring(false);
+        $this->autowireActions($builder);
         $directory = $this->root . '/definitions';
         if (file_exists($directory) && is_dir($directory)) {
             $finder = Finder::create();
@@ -144,6 +133,8 @@ class Bootstrap
     {
         $app = AppFactory::createFromContainer($this->getContainer());
         $this->loadRoutes($app);
+        $app->addRoutingMiddleware();
+        $app->addErrorMiddleware(true,true,true);
         return $app;
     }
 
@@ -160,5 +151,44 @@ class Bootstrap
         } catch (\Exception $exception) {
             throw new BootstrappingException($exception->getMessage(),$exception->getCode(), $exception);
         }
+    }
+
+    /**
+     * @param ContainerBuilder $containerBuilder
+     */
+    private function autowireActions(ContainerBuilder $containerBuilder): void
+    {
+        $actionFqns = $this->getActionFqns();
+        foreach ($actionFqns as $actionFqn) {
+            $containerBuilder->addDefinitions([
+                $actionFqn => factory([ActionFactoryInterface::class, 'create'])
+            ]);
+        }
+    }
+
+
+    /**
+     * @return string[]
+     */
+    private function getActionFqns(): array
+    {
+        $fqns = [];
+        $finder = Finder::create();
+        $finder->files()->in(__DIR__ . '/Actions')->name('*Action.php');
+        if ($finder->hasResults()) {
+            foreach ($finder as $fileInfo) {
+                /** @var SplFileInfo $fileInof */
+
+                $fqn = 'App/Actions/' . $fileInfo->getRelativePathname();
+                if (substr($fqn,-4) == '.php') {
+                    $fqn = substr($fqn, 0, (strlen($fqn)-4));
+                }
+                $fqn = str_replace('/', '\\', $fqn);
+                if (is_subclass_of($fqn, ActionInterface::class, true)) {
+                    $fqns[] = $fqn;
+                }
+            }
+        }
+        return $fqns;
     }
 }
