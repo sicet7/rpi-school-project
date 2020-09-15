@@ -65,38 +65,8 @@ class Bootstrap
      */
     private function loadRoutes(App $app): void
     {
-        foreach ($this->getActionFqns() as $fqn) {
-            $methods = call_user_func([$fqn, 'getMethods']);
-            $pattern = call_user_func([$fqn, 'getPattern']);
-            $name = call_user_func([$fqn, 'getName']);
-
-            if (empty($methods)) {
-                throw new BootstrappingException(
-                    'Failed to load routes.' .
-                    'Empty methods array returned by: "' . $fqn . '::getMethods".'
-                );
-            }
-
-            array_walk($methods, function ($value, $key, $fqn) {
-                if (!is_string($value)) {
-                    throw new BootstrappingException(
-                        'Failed to load routes.' .
-                        'Non-string method in array returned by: "' . $fqn . '::getMethods".'
-                    );
-                }
-            }, $fqn);
-
-            if (!is_string($pattern)) {
-                throw new BootstrappingException(
-                    'Failed to load routes.' .
-                    'Non-string value return by: "' . $fqn . '::getPattern".'
-                );
-            }
-
-            $route = $app->map($methods, $pattern, $fqn);
-            if (!empty($name) && is_string($name)) {
-                $route->setName($name);
-            }
+        foreach ($this->getActionFqns() as $class) {
+            $class::register($app->getRouteCollector());
         }
     }
 
@@ -180,10 +150,9 @@ class Bootstrap
                 /** @var SplFileInfo $fileInof */
 
                 $fqn = 'App/Actions/' . $fileInfo->getRelativePathname();
-                if (substr($fqn,-4) == '.php') {
-                    $fqn = substr($fqn, 0, (strlen($fqn)-4));
-                }
+                $fqn = substr($fqn, 0, (strlen($fqn)-4));
                 $fqn = str_replace('/', '\\', $fqn);
+
                 if (is_subclass_of($fqn, ActionInterface::class, true)) {
                     $fqns[] = $fqn;
                 }

@@ -2,47 +2,35 @@
 
 namespace App\Actions;
 
+use App\Database\Entities\TokenEntity;
 use App\Interfaces\ActionInterface;
-use App\Utility\ConfigManager;
+use Doctrine\ORM\EntityManager;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Slim\Interfaces\RouteCollectorInterface;
 
 class VersionAction implements ActionInterface
 {
     /**
-     * @var ConfigManager
+     * @var EntityManager
      */
-    private ConfigManager $configManager;
+    private EntityManager $entityManager;
 
-    /**
-     * VersionAction constructor.
-     * @param ConfigManager $configManager
-     */
-    public function __construct(ConfigManager $configManager)
+    public function __construct(EntityManager $entityManager)
     {
-        $this->configManager = $configManager;
+        $this->entityManager = $entityManager;
     }
 
-    public static function getMethods(): array
+    public static function register(RouteCollectorInterface $routeCollector): void
     {
-        return ['GET'];
-    }
-
-    public static function getName(): ?string
-    {
-        return null;
-    }
-
-    public static function getPattern(): string
-    {
-        return '/';
+        $routeCollector->map(['GET'], '/', static::class);
     }
 
     public function __invoke(RequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $data = $this->configManager->get('database.password');
+        $repository = $this->entityManager->getRepository(TokenEntity::class);
         $response->getBody()
-            ->write('<pre>' . var_export($data, true) . '</pre>');
+            ->write('<pre>' . var_export($repository, true) . '</pre>');
         return $response;
     }
 }

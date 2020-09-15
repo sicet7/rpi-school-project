@@ -5,9 +5,10 @@ namespace App\Database\Entities;
 use App\Database\Repositories\TokenRepository;
 use App\Database\UuidGenerator;
 use App\Interfaces\EntityInterface;
-use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\Builder\ClassMetadataBuilder;
 use DateTimeInterface;
+use Doctrine\ORM\Mapping\ClassMetadata;
+use Ramsey\Uuid\Uuid;
 
 class TokenEntity implements EntityInterface
 {
@@ -27,20 +28,13 @@ class TokenEntity implements EntityInterface
 
     public static function loadMetadata(ClassMetadata $metadata)
     {
-        $metadata->setCustomRepositoryClass(TokenRepository::class);
-        $metadata->setPrimaryTable(['name' => 'tokens']);
-        $metadata->mapField([
-            'fieldName' => 'id',
-            'type' => 'guid',
-
-        ]);
-        $builder = new ClassMetadataBuilder($metadata);
-        $builder->setCustomRepositoryClass(TokenRepository::class)
+        (new ClassMetadataBuilder($metadata))
+            ->setCustomRepositoryClass(TokenRepository::class)
             ->setTable('tokens')
             ->createField('id', 'guid')
             ->makePrimaryKey()
             ->nullable(false)
-            ->generatedValue('custom')
+            ->generatedValue('CUSTOM')
             ->setCustomIdGenerator(UuidGenerator::class)
             ->build()
             ->createField('value', 'text')
@@ -52,6 +46,11 @@ class TokenEntity implements EntityInterface
             ->build()
             ->createField('updated_at', 'datetimetz')
             ->nullable(true)
+            ->build()
+            ->createField('deleted_at', 'datetimetz')
+            ->nullable(true)
+            ->build()
+            ->addIndex(['deleted_at'], 'tokens_is_deleted');
 
     }
 }

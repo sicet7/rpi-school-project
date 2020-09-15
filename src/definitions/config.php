@@ -1,15 +1,17 @@
 <?php
 
+use App\Interfaces\FinderFactoryInterface;
 use App\Utility\ConfigManager;
-use Symfony\Component\Finder\Finder;
+use Symfony\Component\Finder\SplFileInfo;
 
 return [
-    ConfigManager::class => function () {
+    ConfigManager::class => function (FinderFactoryInterface $finderFactory) {
         $manager = new ConfigManager();
-        $finder = Finder::create();
+        $finder = $finderFactory->create();
         $finder->files()->in(dirname(__DIR__) . '/config')->name('*.php');
         if ($finder->hasResults()) {
             foreach ($finder as $fileInfo) {
+                /** @var SplFileInfo */
                 $data = require $fileInfo->getPathname();
                 if (!is_array($data)) {
                     continue;

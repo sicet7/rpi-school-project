@@ -4,23 +4,15 @@ namespace App\Interfaces;
 
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Slim\Interfaces\RouteCollectorInterface;
 
 interface ActionInterface
 {
     /**
-     * @return string[]
+     * @param RouteCollectorInterface $routeCollector
+     * @return void
      */
-    public static function getMethods(): array;
-
-    /**
-     * @return string
-     */
-    public static function getPattern(): string;
-
-    /**
-     * @return string|null
-     */
-    public static function getName(): ?string;
+    public static function register(RouteCollectorInterface $routeCollector): void;
 
     /**
      * @param RequestInterface $request
