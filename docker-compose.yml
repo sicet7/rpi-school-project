@@ -5,7 +5,7 @@ services:
         ports:
             - 8080:80
         volumes:
-            - ./src:/app
+            - ./src:/var/www/html
             - ./config.conf:/etc/nginx/conf.d/default.conf
         links:
             - php
@@ -13,7 +13,7 @@ services:
         build:
             context: images/php
         volumes:
-            - ./src:/app
+            - ./src:/var/www/html
         links:
             - db
     db:

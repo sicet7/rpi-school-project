@@ -1,13 +1,14 @@
 FROM php:7.4-fpm-alpine
 
-RUN apk add --update --no-cache postgresql-dev \
+RUN apk add --update --no-cache postgresql-dev &&\
     apk add --update --no-cache --virtual buildDeps \
             libxml2-dev \
             curl \
             tzdata \
             curl-dev \
             oniguruma-dev && \
-            docker-php-ext-install pgsql \
+            docker-php-ext-install \
+            pgsql \
             xml \
             simplexml \
             curl \
