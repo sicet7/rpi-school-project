@@ -6,10 +6,10 @@ use App\Interfaces\RepositoryInterface;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * Class TokenRepository
+ * Class EntryRepository
  * @package App\Database\Repositories
  */
-class TokenRepository implements RepositoryInterface
+class EntryRepository implements RepositoryInterface
 {
     /**
      * @var EntityManagerInterface

@@ -5,6 +5,8 @@ namespace App;
 use App\Exceptions\BootstrappingException;
 use App\Interfaces\ActionFactoryInterface;
 use App\Interfaces\ActionInterface;
+use App\Interfaces\RepositoryFactoryInterface;
+use App\Interfaces\RepositoryInterface;
 use DI\ContainerBuilder;
 use Psr\Container\ContainerInterface;
 use Slim\App;
@@ -14,10 +16,21 @@ use Symfony\Component\Finder\SplFileInfo;
 
 use function DI\factory;
 
+/**
+ * Class Bootstrap
+ * @package App
+ */
 class Bootstrap
 {
+    /**
+     * @var Bootstrap
+     */
     private static Bootstrap $instance;
 
+    /**
+     * @param string $root
+     * @throws BootstrappingException
+     */
     public static function runApplication(string $root): void
     {
         if (!isset(static::$instance)) {
@@ -26,10 +39,25 @@ class Bootstrap
         static::$instance->getSlim()->run();
     }
 
+    /**
+     * @var string
+     */
     private string $root;
+
+    /**
+     * @var App
+     */
     private App $application;
+
+    /**
+     * @var ContainerInterface
+     */
     private ContainerInterface $container;
 
+    /**
+     * Bootstrap constructor.
+     * @param string $rootPath
+     */
     private function __construct(string $rootPath)
     {
         $this->root = rtrim(trim($rootPath), '\\/');
@@ -57,42 +85,6 @@ class Bootstrap
             $this->container = $this->newContainer();
         }
         return $this->container;
-    }
-
-    /**
-     * @param App $app
-     * @throws BootstrappingException
-     */
-    private function loadRoutes(App $app): void
-    {
-        foreach ($this->getActionFqns() as $class) {
-            $class::register($app->getRouteCollector());
-        }
-    }
-
-    /**
-     * @param ContainerBuilder $builder
-     * @throws BootstrappingException
-     */
-    private function loadDefinitions(ContainerBuilder $builder): void
-    {
-        $builder->useAnnotations(false);
-        $builder->useAutowiring(false);
-        $this->autowireActions($builder);
-        $directory = $this->root . '/definitions';
-        if (file_exists($directory) && is_dir($directory)) {
-            $finder = Finder::create();
-            $finder->files()->in($directory)->name('*.php');
-            if ($finder->hasResults()) {
-                foreach ($finder as $file) {
-                    $builder->addDefinitions($file->getPathname());
-                }
-            }
-            return;
-        }
-        throw new BootstrappingException(
-            'Failed to load definitions. Directory does not exists: "' . $directory . '".'
-        );
     }
 
     /**
@@ -124,6 +116,43 @@ class Bootstrap
     }
 
     /**
+     * @param App $app
+     */
+    private function loadRoutes(App $app): void
+    {
+        foreach ($this->getActionFqns() as $class) {
+            /** @var ActionInterface $class */
+            $class::register($app->getRouteCollector());
+        }
+    }
+
+    /**
+     * @param ContainerBuilder $builder
+     * @throws BootstrappingException
+     */
+    private function loadDefinitions(ContainerBuilder $builder): void
+    {
+        $builder->useAnnotations(false);
+        $builder->useAutowiring(false);
+        $this->autowireActions($builder);
+        $this->autowireRepositories($builder);
+        $directory = $this->root . '/definitions';
+        if (file_exists($directory) && is_dir($directory)) {
+            $finder = Finder::create();
+            $finder->files()->in($directory)->name('*.php');
+            if ($finder->hasResults()) {
+                foreach ($finder as $file) {
+                    $builder->addDefinitions($file->getPathname());
+                }
+            }
+            return;
+        }
+        throw new BootstrappingException(
+            'Failed to load definitions. Directory does not exists: "' . $directory . '".'
+        );
+    }
+
+    /**
      * @param ContainerBuilder $containerBuilder
      */
     private function autowireActions(ContainerBuilder $containerBuilder): void
@@ -136,25 +165,67 @@ class Bootstrap
         }
     }
 
+    /**
+     * @param ContainerBuilder $containerBuilder
+     */
+    private function autowireRepositories(ContainerBuilder $containerBuilder): void
+    {
+        $repositoryFqns = $this->getRepositoryFqns();
+        foreach ($repositoryFqns as $repositoryFqn) {
+            $containerBuilder->addDefinitions([
+                $repositoryFqn => factory([RepositoryFactoryInterface::class, 'create'])
+            ]);
+        }
+    }
 
     /**
      * @return string[]
      */
     private function getActionFqns(): array
     {
-        $fqns = [];
-        $finder = Finder::create();
-        $finder->files()->in(__DIR__ . '/Actions')->name('*Action.php');
-        if ($finder->hasResults()) {
-            foreach ($finder as $fileInfo) {
-                /** @var SplFileInfo $fileInof */
+        static $fqns;
+        if (!isset($fqns)) {
+            $fqns = [];
+            $finder = Finder::create();
+            $finder->files()->in($this->root . '/app/Actions')->name('*.php');
+            if ($finder->hasResults()) {
+                foreach ($finder as $fileInfo) {
+                    /** @var SplFileInfo $fileInfo */
 
-                $fqn = 'App/Actions/' . $fileInfo->getRelativePathname();
-                $fqn = substr($fqn, 0, (strlen($fqn)-4));
-                $fqn = str_replace('/', '\\', $fqn);
+                    $fqn = 'App/Actions/' . $fileInfo->getRelativePathname();
+                    $fqn = substr($fqn, 0, (strlen($fqn)-4));
+                    $fqn = str_replace('/', '\\', $fqn);
 
-                if (is_subclass_of($fqn, ActionInterface::class, true)) {
-                    $fqns[] = $fqn;
+                    if (is_subclass_of($fqn, ActionInterface::class, true)) {
+                        $fqns[] = $fqn;
+                    }
+                }
+            }
+        }
+        return $fqns;
+    }
+
+    /**
+     * @return string[]
+     */
+    private function getRepositoryFqns(): array
+    {
+        static $fqns;
+        if (!isset($fqns)) {
+            $fqns = [];
+            $finder = Finder::create();
+            $finder->files()->in($this->root . '/app/Database/Repositories')->name('*.php');
+            if ($finder->hasResults()) {
+                foreach ($finder as $fileInfo) {
+                    /** @var SplFileInfo $fileInfo */
+
+                    $fqn = 'App/Database/Repositories/' . $fileInfo->getRelativePathname();
+                    $fqn = substr($fqn, 0, (strlen($fqn)-4));
+                    $fqn = str_replace('/', '\\', $fqn);
+
+                    if (is_subclass_of($fqn, RepositoryInterface::class, true)) {
+                        $fqns[] = $fqn;
+                    }
                 }
             }
         }

@@ -16,6 +16,8 @@ services:
             - ./src:/var/www/html
         links:
             - db
+        env_file:
+          - app.env
     db:
         build:
             context: images/postgres

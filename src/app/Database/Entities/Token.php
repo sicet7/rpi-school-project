@@ -8,17 +8,42 @@ use App\Interfaces\EntityInterface;
 use Doctrine\ORM\Mapping\Builder\ClassMetadataBuilder;
 use DateTimeInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
-use Ramsey\Uuid\Uuid;
 
-class TokenEntity implements EntityInterface
+/**
+ * Class Token
+ * @package App\Database\Entities
+ */
+class Token implements EntityInterface
 {
 
+    /**
+     * @var string
+     */
     private string $id;
+
+    /**
+     * @var string
+     */
     private string $value;
+
+    /**
+     * @var DateTimeInterface
+     */
     private DateTimeInterface $created_at;
+
+    /**
+     * @var DateTimeInterface|null
+     */
     private ?DateTimeInterface $updated_at = null;
+
+    /**
+     * @var DateTimeInterface|null
+     */
     private ?DateTimeInterface $deleted_at = null;
 
+    /**
+     * Token constructor.
+     */
     public function __construct()
     {
         if (!isset($this->created_at)) {
@@ -26,7 +51,7 @@ class TokenEntity implements EntityInterface
         }
     }
 
-    public static function loadMetadata(ClassMetadata $metadata)
+    public static function loadMetadata(ClassMetadata $metadata): void
     {
         (new ClassMetadataBuilder($metadata))
             ->setCustomRepositoryClass(TokenRepository::class)
@@ -41,16 +66,15 @@ class TokenEntity implements EntityInterface
             ->nullable(false)
             ->unique(true)
             ->build()
-            ->createField('created_at', 'datetimetz')
+            ->createField('created_at', 'datetimetz_immutable')
             ->nullable(false)
             ->build()
-            ->createField('updated_at', 'datetimetz')
+            ->createField('updated_at', 'datetimetz_immutable')
             ->nullable(true)
             ->build()
-            ->createField('deleted_at', 'datetimetz')
+            ->createField('deleted_at', 'datetimetz_immutable')
             ->nullable(true)
             ->build()
             ->addIndex(['deleted_at'], 'tokens_is_deleted');
-
     }
 }

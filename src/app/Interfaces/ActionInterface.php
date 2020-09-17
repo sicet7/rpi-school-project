@@ -6,6 +6,10 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Slim\Interfaces\RouteCollectorInterface;
 
+/**
+ * Interface ActionInterface
+ * @package App\Interfaces
+ */
 interface ActionInterface
 {
     /**

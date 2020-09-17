@@ -4,9 +4,17 @@ namespace App\Utility;
 
 use App\Exceptions\ConfigException;
 
+/**
+ * Class ConfigManager
+ * @package App\Utility
+ */
 class ConfigManager
 {
     private const DELIMITER = '.';
+
+    /**
+     * @var array
+     */
     private array $data = [];
 
     /**
@@ -33,7 +41,7 @@ class ConfigManager
     }
 
     /**
-     * @param string|null $name
+     * @param string|null $name if null will return all data otherwise it will look for the key.
      * @return mixed
      */
     public function get(?string $name = null)
@@ -53,11 +61,14 @@ class ConfigManager
     }
 
     /**
-     * @param string $name
+     * @param string|null $name if null it will check if any data exists, otherwise it will look for the key.
      * @return bool
      */
-    public function exists(string $name): bool
+    public function exists(?string $name = null): bool
     {
+        if ($name === null) {
+            return !empty($this->data);
+        }
         $name = trim($name, static::DELIMITER . " \t\n\r\0\x0B");
         if (stristr($name, static::DELIMITER) !== false) {
             try {
@@ -117,7 +128,7 @@ class ConfigManager
 
     /**
      * @param string[] $path
-     * @param mixed $value
+     * @param mixed|ConfigException $value if ConfigException is passed as the value, it will try to unset the path.
      * @param array|null $data
      * @param string|null $dataKey
      * @return ConfigManager

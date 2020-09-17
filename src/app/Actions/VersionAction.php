@@ -2,14 +2,16 @@
 
 namespace App\Actions;
 
-use App\Database\Entities\TokenEntity;
 use App\Interfaces\ActionInterface;
 use App\Utility\ConfigManager;
-use Doctrine\ORM\EntityManager;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Slim\Interfaces\RouteCollectorInterface;
 
+/**
+ * Class VersionAction
+ * @package App\Actions
+ */
 class VersionAction implements ActionInterface
 {
 
@@ -18,18 +20,32 @@ class VersionAction implements ActionInterface
      */
     private ConfigManager $configManager;
 
+    /**
+     * VersionAction constructor.
+     * @param ConfigManager $configManager
+     */
     public function __construct(ConfigManager $configManager)
     {
         $this->configManager = $configManager;
     }
 
+    /**
+     * @param RouteCollectorInterface $routeCollector
+     */
     public static function register(RouteCollectorInterface $routeCollector): void
     {
         $routeCollector->map(['POST', 'GET'], '/', static::class);
     }
 
+    /**
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
+     * @param array $args
+     * @return ResponseInterface
+     */
     public function __invoke(RequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
+        var_dump($this->configManager->get('environment'));
         $logDir = $this->configManager->get('directory.log');
         if (!file_exists($logDir)) {
             mkdir($logDir, 0777, true);

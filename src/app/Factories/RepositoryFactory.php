@@ -2,19 +2,25 @@
 
 namespace App\Factories;
 
-use App\Interfaces\ActionFactoryInterface;
-use App\Interfaces\ActionInterface;
+use App\Interfaces\RepositoryFactoryInterface;
+use App\Interfaces\RepositoryInterface;
 use DI\DependencyException;
 use DI\Factory\RequestedEntry;
+use Doctrine\ORM\EntityManagerInterface;
 use Invoker\ParameterResolver\ParameterResolver;
 
 /**
- * Class ActionFactory
+ * Class RepositoryFactory
  * @package App\Factories
  */
-class ActionFactory implements ActionFactoryInterface
+class RepositoryFactory implements RepositoryFactoryInterface
 {
-    private const INTERFACE = ActionInterface::class;
+    private const INTERFACE = RepositoryInterface::class;
+
+    /**
+     * @var EntityManagerInterface
+     */
+    private EntityManagerInterface $entityManager;
 
     /**
      * @var ParameterResolver
@@ -22,20 +28,22 @@ class ActionFactory implements ActionFactoryInterface
     private ParameterResolver $resolver;
 
     /**
-     * ActionFactory constructor.
+     * RepositoryFactory constructor.
+     * @param EntityManagerInterface $entityManager
      * @param ParameterResolver $parameterResolver
      */
-    public function __construct(ParameterResolver $parameterResolver)
+    public function __construct(EntityManagerInterface $entityManager, ParameterResolver $parameterResolver)
     {
+        $this->entityManager = $entityManager;
         $this->resolver = $parameterResolver;
     }
 
     /**
      * @param RequestedEntry $entry
-     * @return ActionInterface
+     * @return RepositoryInterface
      * @throws DependencyException
      */
-    public function create(RequestedEntry $entry): ActionInterface
+    public function create(RequestedEntry $entry): RepositoryInterface
     {
         $name = $entry->getName();
 
@@ -52,12 +60,16 @@ class ActionFactory implements ActionFactoryInterface
                     [],
                     []
                 );
-                return new $name(...$args);
+                $instance = new $name(...$args);
             } else {
-                return new $name();
+                $instance = new $name();
             }
+            /** @var RepositoryInterface $instance */
+            $instance->setEntityManager($this->entityManager);
+            return $instance;
         } catch (\ReflectionException $exception) {
             throw new DependencyException($exception->getMessage(), $exception->getCode(), $exception);
         }
+
     }
 }

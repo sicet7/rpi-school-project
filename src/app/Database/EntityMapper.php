@@ -12,6 +12,10 @@ use Doctrine\ORM\Mapping\ClassMetadata as WritableClassMetadata;
 use Doctrine\Persistence\Mapping\Driver\MappingDriver as MappingDriverInterface;
 use Symfony\Component\Finder\SplFileInfo;
 
+/**
+ * Class EntityMapper
+ * @package App\Database
+ */
 class EntityMapper implements MappingDriverInterface
 {
     /**
@@ -25,7 +29,7 @@ class EntityMapper implements MappingDriverInterface
     private FinderFactoryInterface $finderFactory;
 
     /**
-     * @var array
+     * @var string[]
      */
     private array $classnameCache;
 
@@ -70,7 +74,7 @@ class EntityMapper implements MappingDriverInterface
     {
         if (!isset($this->classnameCache)) {
             $namespace = trim($this->configManager->get('database.entities.namespace'), "\\ \t\n\r\0\x0B");
-            $directory = trim($this->configManager->get('database.entities.directory'), "/ \t\n\r\0\x0B");
+            $directory = trim($this->configManager->get('database.entities.directory'));
             $finder = $this->finderFactory->create();
             $finder->files()->in($directory)->name('*.php');
             $classFqns = [];
@@ -95,6 +99,10 @@ class EntityMapper implements MappingDriverInterface
         return $this->classnameCache;
     }
 
+    /**
+     * @param string $className
+     * @return bool
+     */
     public function isTransient($className)
     {
         return is_subclass_of($className, TransientEntityInterface::class, true);

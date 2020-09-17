@@ -2,3 +2,4 @@
 data/
 src/vendor
 src/var
+src/.env
