@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Factories\ActionFactory;
 use App\Factories\RepositoryFactory;
 use App\Interfaces\ActionFactoryInterface;

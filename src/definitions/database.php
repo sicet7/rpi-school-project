@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Database\EntityMapper;
 use App\Interfaces\FinderFactoryInterface;
 use App\Utility\ConfigManager;

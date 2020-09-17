@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 $env = [];
 $environmentFile = dirname(__DIR__) . '/.env';
 if (file_exists($environmentFile)) {

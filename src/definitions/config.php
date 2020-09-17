@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Interfaces\FinderFactoryInterface;
 use App\Utility\ConfigManager;
 use Symfony\Component\Finder\SplFileInfo;

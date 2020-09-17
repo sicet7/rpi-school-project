@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 $db = [
     'params' => [
         'driver' => 'pdo_pgsql',
