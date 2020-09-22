@@ -47,7 +47,7 @@ class VersionAction implements ActionInterface
      */
     public function __invoke(RequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        var_dump($this->configManager->get('environment'));
+        var_dump($request->getHeader('Authorization'));
         $logDir = $this->configManager->get('directory.log');
         if (!file_exists($logDir)) {
             mkdir($logDir, 0777, true);

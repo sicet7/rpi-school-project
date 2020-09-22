@@ -23,9 +23,4 @@ interface RepositoryInterface
      * @return RepositoryInterface
      */
     public function setEntityManager(EntityManagerInterface $entityManager): RepositoryInterface;
-
-    /**
-     * @return EntityPersister
-     */
-    public function getPersister(): EntityPersister;
 }

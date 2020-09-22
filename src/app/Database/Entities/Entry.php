@@ -43,16 +43,14 @@ class Entry implements EntityInterface
      */
     private ?DateTimeInterface $updated_at = null;
 
-    /**
-     * @var DateTimeInterface|null
-     */
-    private ?DateTimeInterface $deleted_at = null;
-
-    public function __construct(Token $token)
+    public function __construct(Token $token, ?array $data = null)
     {
         $this->id = Uuid::uuid4()->toString();
         $this->created_at = new \DateTimeImmutable('now');
         $this->token = $token;
+        if ($data !== null) {
+            $this->data = $data;
+        }
     }
 
     /**
@@ -78,6 +76,7 @@ class Entry implements EntityInterface
     public function setData(array $data): Entry
     {
         $this->data = $data;
+        $this->setUpdatedAt();
         return $this;
     }
 
@@ -96,22 +95,31 @@ class Entry implements EntityInterface
     public function setToken(Token $token): Entry
     {
         $this->token = $token;
+        $this->setUpdatedAt();
         return $this;
     }
 
     /**
-     * @return DateTimeInterface
+     * @param bool $format
+     * @return DateTimeInterface|string
      */
-    public function getCreatedAt(): DateTimeInterface
+    public function getCreatedAt(bool $format = false)
     {
+        if ($format) {
+            return $this->formatDate($this->created_at);
+        }
         return $this->created_at;
     }
 
     /**
-     * @return DateTimeInterface|null
+     * @param bool $format
+     * @return DateTimeInterface|string|null
      */
-    public function getUpdatedAt(): ?DateTimeInterface
+    public function getUpdatedAt(bool $format = false)
     {
+        if ($format) {
+            return $this->formatDate($this->updated_at);
+        }
         return $this->updated_at;
     }
 
@@ -121,23 +129,6 @@ class Entry implements EntityInterface
     public function setUpdatedAt(): Entry
     {
         $this->updated_at = new \DateTimeImmutable('now');
-        return $this;
-    }
-
-    /**
-     * @return DateTimeInterface|null
-     */
-    public function getDeletedAt(): ?DateTimeInterface
-    {
-        return $this->deleted_at;
-    }
-
-    /**
-     * @return Entry
-     */
-    public function setDeletedAt(): Entry
-    {
-        $this->deleted_at = new \DateTimeImmutable('now');
         return $this;
     }
 
@@ -168,11 +159,17 @@ class Entry implements EntityInterface
         $builder->createField('updated_at', 'datetimetz_immutable')
             ->nullable(true)
             ->build();
+    }
 
-        $builder->createField('deleted_at', 'datetimetz_immutable')
-            ->nullable(true)
-            ->build();
-
-        $builder->addIndex(['deleted_at'], 'entries_is_deleted');
+    /**
+     * @param \DateTimeInterface|null $dateTime
+     * @return string|null
+     */
+    private function formatDate(?\DateTimeInterface $dateTime = null): ?string
+    {
+        if ($dateTime instanceof \DateTimeInterface) {
+            return $dateTime->format(\DateTimeInterface::ISO8601);
+        }
+        return null;
     }
 }

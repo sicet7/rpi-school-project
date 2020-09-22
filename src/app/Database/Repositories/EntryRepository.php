@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App\Database\Repositories;
 
 use App\Database\Entities\Entry;
-use App\Database\Entities\Token;
 use App\Interfaces\RepositoryInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Criteria;
+use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityNotFoundException;
-use Doctrine\ORM\Persisters\Entity\EntityPersister;
-use Ramsey\Uuid\UuidInterface;
+use Doctrine\ORM\NonUniqueResultException;
+use Doctrine\ORM\Query\QueryException;
 
 /**
  * Class EntryRepository
@@ -45,14 +45,6 @@ class EntryRepository implements RepositoryInterface
     }
 
     /**
-     * @inheritDoc
-     */
-    public function getPersister(): EntityPersister
-    {
-        return $this->getEntityManager()->getUnitOfWork()->getEntityPersister(static::ENTITY);
-    }
-
-    /**
      * @param Entry $entry
      * @return EntryRepository
      */
@@ -72,25 +64,13 @@ class EntryRepository implements RepositoryInterface
     }
 
     /**
-     * @param Entry $entry
-     * @return EntryRepository
-     */
-    public function save(Entry $entry): EntryRepository
-    {
-        $this->persist($entry);
-        $this->flush();
-        return $this;
-    }
-
-    /**
-     * @param $id
-     * @param bool $includeDeleted
+     * @param string $id
      * @return Entry|null
+     * @throws QueryException
      */
-    public function findById($id, bool $includeDeleted = false): ?Entry
+    public function findById(string $id): ?Entry
     {
-        $id = $this->getId($id);
-        $data = $this->findBy($this->getCriteria($id, $includeDeleted));
+        $data = $this->getList(Criteria::create()->where(Criteria::expr()->eq('id', $id)));
         $first = $data->first();
         if ($first instanceof Entry) {
             return $first;
@@ -99,24 +79,31 @@ class EntryRepository implements RepositoryInterface
     }
 
     /**
-     * @param Criteria $criteria
+     * @param Criteria|null $criteria
      * @return ArrayCollection
+     * @throws QueryException
      */
-    public function findBy(Criteria $criteria): ArrayCollection
+    public function getList(?Criteria $criteria = null): ArrayCollection
     {
-        $data = $this->getPersister()->loadCriteria($criteria);
+        $queryBuilder = $this->getEntityManager()->createQueryBuilder();
+        $queryBuilder->select('e');
+        $queryBuilder->from(static::ENTITY, 'e');
+        if ($criteria instanceof Criteria) {
+            $queryBuilder->addCriteria($criteria);
+        }
+        $data = $queryBuilder->getQuery()->getResult(AbstractQuery::HYDRATE_OBJECT);
         return new ArrayCollection($data);
     }
 
     /**
-     * @param $id
-     * @param bool $includeDeleted
+     * @param string $id
      * @return Entry
      * @throws EntityNotFoundException
+     * @throws QueryException
      */
-    public function getById($id, bool $includeDeleted = false): Entry
+    public function getById(string $id): Entry
     {
-        $entry = $this->findById($id, $includeDeleted);
+        $entry = $this->findById($id);
         if ($entry instanceof Entry) {
             return $entry;
         }
@@ -126,18 +113,16 @@ class EntryRepository implements RepositoryInterface
     }
 
     /**
-     * @param Entry $entry
-     * @param bool $hardDelete
-     * @return EntryRepository
+     * @param string $id
+     * @return $this
+     * @throws QueryException
      */
-    public function delete(Entry $entry, bool $hardDelete = false): EntryRepository
+    public function deleteById(string $id): EntryRepository
     {
-        if ($hardDelete) {
-            $this->getEntityManager()->remove($entry);
-        } else {
-            $entry->setDeletedAt();
-            $this->save($entry);
-        }
+        $queryBuilder = $this->getEntityManager()->createQueryBuilder();
+        $queryBuilder->delete(static::ENTITY, 'e');
+        $queryBuilder->addCriteria(Criteria::create()->where(Criteria::expr()->eq('id', $id)));
+        $queryBuilder->getQuery()->getResult(AbstractQuery::HYDRATE_OBJECT);
         return $this;
     }
 
@@ -152,40 +137,26 @@ class EntryRepository implements RepositoryInterface
     }
 
     /**
-     * @param Entry $entry
-     * @param bool $includeDeleted
-     * @return bool
+     * @param Criteria|null $criteria
+     * @return int
+     * @throws QueryException
+     * @throws NonUniqueResultException
      */
-    public function exists(Entry $entry, bool $includeDeleted = false): bool
+    public function countList(?Criteria $criteria = null): int
     {
-        return $this->getPersister()->exists($entry, $this->getCriteria($entry->getId(), $includeDeleted));
-    }
-
-    /**
-     * @param mixed $id
-     * @param bool $includeDeleted
-     * @return Criteria
-     */
-    private function getCriteria($id, bool $includeDeleted): Criteria
-    {
-        $criteria = Criteria::create();
-        $builder = Criteria::expr();
-        $criteria->where($builder->eq('id', $id));
-        if (!$includeDeleted) {
-            $criteria->andWhere($builder->isNull('deleted_at'));
+        $queryBuilder = $this->getEntityManager()->createQueryBuilder();
+        $queryBuilder->select('COUNT(e)');
+        $queryBuilder->from(static::ENTITY, 'e');
+        if ($criteria instanceof Criteria) {
+            $queryBuilder->addCriteria($criteria);
         }
-        return $criteria;
-    }
-
-    /**
-     * @param string|UuidInterface $id
-     * @return string
-     */
-    private function getId($id): string
-    {
-        if ($id instanceof UuidInterface) {
-            return $id->toString();
+        $count = $queryBuilder->getQuery()->getOneOrNullResult();
+        if (is_array($count) && !empty($count)) {
+            $count = $count[array_keys($count)[0]];
         }
-        return $id;
+        if ($count !== null && is_numeric($count)) {
+            return (int) $count;
+        }
+        return 0;
     }
 }

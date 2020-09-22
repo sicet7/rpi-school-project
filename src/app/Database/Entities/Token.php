@@ -8,6 +8,7 @@ use App\Database\Repositories\TokenRepository;
 use App\Database\UuidGenerator;
 use App\Interfaces\EntityInterface;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping\Builder\ClassMetadataBuilder;
 use DateTimeInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
@@ -41,14 +42,9 @@ class Token implements EntityInterface
     private ?DateTimeInterface $updated_at = null;
 
     /**
-     * @var DateTimeInterface|null
+     * @var Collection
      */
-    private ?DateTimeInterface $deleted_at = null;
-
-    /**
-     * @var ArrayCollection
-     */
-    private ArrayCollection $entries;
+    private Collection $entries;
 
     /**
      * Token constructor.
@@ -117,26 +113,9 @@ class Token implements EntityInterface
     }
 
     /**
-     * @return DateTimeInterface|null
+     * @return Collection
      */
-    public function getDeletedAt(): ?DateTimeInterface
-    {
-        return $this->deleted_at;
-    }
-
-    /**
-     * @return Token
-     */
-    public function setDeletedAt(): Token
-    {
-        $this->deleted_at = new \DateTimeImmutable('now');
-        return $this;
-    }
-
-    /**
-     * @return ArrayCollection
-     */
-    public function getEntries(): ArrayCollection
+    public function getEntries(): Collection
     {
         return $this->entries;
     }
@@ -170,12 +149,7 @@ class Token implements EntityInterface
             ->nullable(true)
             ->build();
 
-        $builder->createField('deleted_at', 'datetimetz_immutable')
-            ->nullable(true)
-            ->build();
-
-        $builder->addIndex(['deleted_at'], 'tokens_is_deleted');
         $builder->addOneToMany('entries', Entry::class, 'token');
-        $builder->addUniqueConstraint(['value', 'deleted_at'], 'value_and_deleted_unique');
+        $builder->addUniqueConstraint(['value'], 'value_unique');
     }
 }

@@ -8,10 +8,10 @@ use App\Database\Entities\Token;
 use App\Interfaces\RepositoryInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Criteria;
+use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityNotFoundException;
-use Ramsey\Uuid\UuidInterface;
-use Doctrine\ORM\Persisters\Entity\EntityPersister;
+use Doctrine\ORM\Query\QueryException;
 
 /**
  * Class TokenRepository
@@ -44,14 +44,6 @@ class TokenRepository implements RepositoryInterface
     }
 
     /**
-     * @inheritDoc
-     */
-    public function getPersister(): EntityPersister
-    {
-        return $this->getEntityManager()->getUnitOfWork()->getEntityPersister(static::ENTITY);
-    }
-
-    /**
      * @param Token $token
      * @return TokenRepository
      */
@@ -71,31 +63,17 @@ class TokenRepository implements RepositoryInterface
     }
 
     /**
-     * @param Token $token
-     * @return TokenRepository
-     */
-    public function save(Token $token): TokenRepository
-    {
-        $this->persist($token);
-        $this->flush();
-        return $this;
-    }
-
-    /**
-     * @param $id
-     * @param bool $includeDeleted
+     * @param string $id
      * @return Token|null
+     * @throws QueryException
      */
-    public function findById($id, bool $includeDeleted = false): ?Token
+    public function findById(string $id): ?Token
     {
-        if ($id instanceof UuidInterface) {
-            $id = $id->toString();
-        }
-        $data = $this->getPersister()->loadCriteria($this->getCriteria($id, $includeDeleted));
-        if (empty($data)) {
+        $data = $this->getList(Criteria::create()->where(Criteria::expr()->eq('id', $id)));
+        if ($data->isEmpty()) {
             return null;
         }
-        $first = $data[array_keys($data)[0]];
+        $first = $data->first();
         if ($first instanceof Token) {
             return $first;
         }
@@ -103,24 +81,44 @@ class TokenRepository implements RepositoryInterface
     }
 
     /**
-     * @param Criteria $criteria
-     * @return ArrayCollection
+     * @param string $value
+     * @return Token|null
+     * @throws QueryException
      */
-    public function findBy(Criteria $criteria): ArrayCollection
+    public function findByValue(string $value): ?Token
     {
-        $data = $this->getPersister()->loadCriteria($criteria);
+        $data = $this->getList(Criteria::create()->where(Criteria::expr()->eq('value', $value)));
+        if ($data->isEmpty() || !($data->first() instanceof Token)) {
+            return null;
+        }
+        return $data->first();
+    }
+
+    /**
+     * @param Criteria|null $criteria
+     * @return ArrayCollection
+     * @throws QueryException
+     */
+    public function getList(?Criteria $criteria = null): ArrayCollection
+    {
+        $queryBuilder = $this->getEntityManager()->createQueryBuilder();
+        $queryBuilder->select('e');
+        $queryBuilder->from(static::ENTITY, 'e');
+        if ($criteria instanceof Criteria) {
+            $queryBuilder->addCriteria($criteria);
+        }
+        $data = $queryBuilder->getQuery()->getResult(AbstractQuery::HYDRATE_OBJECT);
         return new ArrayCollection($data);
     }
 
     /**
-     * @param $id
-     * @param bool $includeDeleted
+     * @param string $id
      * @return Token
-     * @throws EntityNotFoundException
+     * @throws EntityNotFoundException|QueryException
      */
-    public function getById($id, bool $includeDeleted = false): Token
+    public function getById(string $id): Token
     {
-        $token = $this->findById($id, $includeDeleted);
+        $token = $this->findById($id);
         if ($token instanceof Token) {
             return $token;
         }
@@ -130,18 +128,16 @@ class TokenRepository implements RepositoryInterface
     }
 
     /**
-     * @param Token $token
-     * @param bool $hardDelete
-     * @return TokenRepository
+     * @param string $id
+     * @return $this
+     * @throws QueryException
      */
-    public function delete(Token $token, bool $hardDelete = false): TokenRepository
+    public function deleteById(string $id): TokenRepository
     {
-        if ($hardDelete) {
-            $this->getEntityManager()->remove($token);
-        } else {
-            $token->setDeletedAt();
-            $this->save($token);
-        }
+        $queryBuilder = $this->getEntityManager()->createQueryBuilder();
+        $queryBuilder->delete(static::ENTITY, 'e');
+        $queryBuilder->addCriteria(Criteria::create()->where(Criteria::expr()->eq('id', $id)));
+        $queryBuilder->getQuery()->getResult();
         return $this;
     }
 
@@ -153,31 +149,5 @@ class TokenRepository implements RepositoryInterface
     {
         $this->getEntityManager()->refresh($token);
         return $this;
-    }
-
-    /**
-     * @param Token $token
-     * @param bool $includeDeleted
-     * @return bool
-     */
-    public function exists(Token $token, bool $includeDeleted = false): bool
-    {
-        return $this->getPersister()->exists($token, $this->getCriteria($token->getId(), $includeDeleted));
-    }
-
-    /**
-     * @param mixed $id
-     * @param bool $includeDeleted
-     * @return Criteria
-     */
-    private function getCriteria($id, bool $includeDeleted): Criteria
-    {
-        $criteria = Criteria::create();
-        $builder = Criteria::expr();
-        $criteria->where($builder->eq('id', $id));
-        if (!$includeDeleted) {
-            $criteria->andWhere($builder->isNull('deleted_at'));
-        }
-        return $criteria;
     }
 }

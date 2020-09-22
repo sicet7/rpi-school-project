@@ -17,6 +17,12 @@ $container = (new ContainerBuilder())
 
 $config = new ConfigurationArray($container->get(ConfigManager::class)->get('migrations'));
 
+foreach ($container->get(ConfigManager::class)->get('migrations.migrations_paths') as $namespace => $directory) {
+    if (!file_exists($directory)) {
+        mkdir($directory, 0777, true);
+    }
+}
+
 return DependencyFactory::fromEntityManager(
     $config,
     new ExistingEntityManager($container->get(EntityManagerInterface::class))
