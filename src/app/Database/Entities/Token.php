@@ -7,9 +7,11 @@ namespace App\Database\Entities;
 use App\Database\Repositories\TokenRepository;
 use App\Database\UuidGenerator;
 use App\Interfaces\EntityInterface;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping\Builder\ClassMetadataBuilder;
 use DateTimeInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
+use Ramsey\Uuid\Uuid;
 
 /**
  * Class Token
@@ -44,39 +46,136 @@ class Token implements EntityInterface
     private ?DateTimeInterface $deleted_at = null;
 
     /**
-     * Token constructor.
+     * @var ArrayCollection
      */
-    public function __construct()
+    private ArrayCollection $entries;
+
+    /**
+     * Token constructor.
+     * @param string|null $value
+     */
+    public function __construct(?string $value = null)
     {
-        if (!isset($this->created_at)) {
-            $this->created_at = new \DateTimeImmutable('now');
+        $this->id = Uuid::uuid4()->toString();
+        $this->created_at = new \DateTimeImmutable('now');
+        $this->entries = new ArrayCollection();
+        if ($value !== null) {
+            $this->value = $value;
         }
     }
 
+    /**
+     * @return string
+     */
+    public function getId(): string
+    {
+        return $this->id;
+    }
+
+    /**
+     * @return string
+     */
+    public function getValue(): string
+    {
+        return $this->value;
+    }
+
+    /**
+     * @param string $value
+     * @return Token
+     */
+    public function setValue(string $value): Token
+    {
+        $this->value = $value;
+        $this->setUpdatedAt();
+        return $this;
+    }
+
+    /**
+     * @return DateTimeInterface
+     */
+    public function getCreatedAt(): DateTimeInterface
+    {
+        return $this->created_at;
+    }
+
+    /**
+     * @return DateTimeInterface|null
+     */
+    public function getUpdatedAt(): ?DateTimeInterface
+    {
+        return $this->updated_at;
+    }
+
+    /**
+     * @return Token
+     */
+    public function setUpdatedAt(): Token
+    {
+        $this->updated_at = new \DateTimeImmutable('now');
+        return $this;
+    }
+
+    /**
+     * @return DateTimeInterface|null
+     */
+    public function getDeletedAt(): ?DateTimeInterface
+    {
+        return $this->deleted_at;
+    }
+
+    /**
+     * @return Token
+     */
+    public function setDeletedAt(): Token
+    {
+        $this->deleted_at = new \DateTimeImmutable('now');
+        return $this;
+    }
+
+    /**
+     * @return ArrayCollection
+     */
+    public function getEntries(): ArrayCollection
+    {
+        return $this->entries;
+    }
+
+    /**
+     * @inheritDoc
+     */
     public static function loadMetadata(ClassMetadata $metadata): void
     {
-        (new ClassMetadataBuilder($metadata))
-            ->setCustomRepositoryClass(TokenRepository::class)
-            ->setTable('tokens')
-            ->createField('id', 'guid')
+        $builder = new ClassMetadataBuilder($metadata);
+
+        $builder->setCustomRepositoryClass(TokenRepository::class);
+        $builder->setTable('tokens');
+
+        $builder->createField('id', 'guid')
             ->makePrimaryKey()
             ->nullable(false)
             ->generatedValue('CUSTOM')
             ->setCustomIdGenerator(UuidGenerator::class)
-            ->build()
-            ->createField('value', 'text')
+            ->build();
+
+        $builder->createField('value', 'text')
             ->nullable(false)
-            ->unique(true)
-            ->build()
-            ->createField('created_at', 'datetimetz_immutable')
+            ->build();
+
+        $builder->createField('created_at', 'datetimetz_immutable')
             ->nullable(false)
-            ->build()
-            ->createField('updated_at', 'datetimetz_immutable')
+            ->build();
+
+        $builder->createField('updated_at', 'datetimetz_immutable')
             ->nullable(true)
-            ->build()
-            ->createField('deleted_at', 'datetimetz_immutable')
+            ->build();
+
+        $builder->createField('deleted_at', 'datetimetz_immutable')
             ->nullable(true)
-            ->build()
-            ->addIndex(['deleted_at'], 'tokens_is_deleted');
+            ->build();
+
+        $builder->addIndex(['deleted_at'], 'tokens_is_deleted');
+        $builder->addOneToMany('entries', Entry::class, 'token');
+        $builder->addUniqueConstraint(['value', 'deleted_at'], 'value_and_deleted_unique');
     }
 }

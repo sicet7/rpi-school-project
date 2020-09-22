@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Interfaces;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Persisters\Entity\EntityPersister;
 
 /**
  * Interface RepositoryInterface
@@ -22,4 +23,9 @@ interface RepositoryInterface
      * @return RepositoryInterface
      */
     public function setEntityManager(EntityManagerInterface $entityManager): RepositoryInterface;
+
+    /**
+     * @return EntityPersister
+     */
+    public function getPersister(): EntityPersister;
 }
