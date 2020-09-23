@@ -13,6 +13,7 @@ RUN apk add --update --no-cache postgresql-dev &&\
             simplexml \
             curl \
             pdo \
+            pdo_pgsql \
             mysqli \
             mbstring \
             json \
