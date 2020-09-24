@@ -22,7 +22,7 @@ class Test implements ActionInterface
      */
     public static function register(RouteCollectorInterface $routeCollector): void
     {
-        $routeCollector->map(['POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS', 'GET'], '/', static::class);
+        $routeCollector->map(['POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS', 'GET'], '/test', static::class);
     }
 
     /**

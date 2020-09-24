@@ -44,22 +44,34 @@ class All implements ActionInterface
         try {
             $output = [];
             parse_str($request->getUri()->getQuery(), $output);
+            $output = array_change_key_case($output, CASE_LOWER);
+
+            $criteria = Criteria::create();
 
             if (isset($output['skip']) && is_numeric($output['skip'])) {
-                $skip = $output['skip'];
+                $criteria->setFirstResult($output['skip']);
             } else {
-                $skip = 0;
+                $criteria->setFirstResult(0);
             }
 
             if (isset($output['take']) && is_numeric($output['take']) && $output['take'] <= 500) {
-                $take = $output['take'];
+                $criteria->setMaxResults($output['take']);
             } else {
-                $take = 20;
+                $criteria->setMaxResults(20);
             }
 
-            $entries = $this->entryRepository->getList(
-                Criteria::create()->setFirstResult($skip)->setMaxResults($take)
-            );
+            if (isset($output['orderby']) && property_exists(Entry::class, $output['orderby'])) {
+                if (isset($output['direction']) &&
+                    is_string($output['direction']) &&
+                    strtolower($output['direction']) == 'desc'
+                ) {
+                    $criteria->orderBy([$output['orderby'] => Criteria::DESC]);
+                } else {
+                    $criteria->orderBy([$output['orderby'] => Criteria::ASC]);
+                }
+            }
+
+            $entries = $this->entryRepository->getList($criteria);
 
             $returnArray = [];
 
@@ -71,8 +83,8 @@ class All implements ActionInterface
             //FIXME: this is not ideal, but this was made quickly.
             return $response->withStatus(200)->withBody(Stream::create(
                 $this->json->encode([
-                    'skip' => $skip,
-                    'take' => $take,
+                    'skip' => $criteria->getFirstResult(),
+                    'take' => $criteria->getMaxResults(),
                     'total' => $this->entryRepository->countList(),
                     'data' => $returnArray,
                 ])
@@ -94,7 +106,13 @@ class All implements ActionInterface
     {
         return [
             'id' => $entry->getId(),
-            'data' => $entry->getData(),
+            'sound' => $entry->getSound(),
+            'temp' => $entry->getTemp(),
+            'light' => $entry->getLight(),
+            'humidity' => $entry->getHumidity(),
+            'celsius' => $entry->getCelsius(),
+            'fahrenheit' => $entry->getFahrenheit(),
+            'kelvin' => $entry->getKelvin(),
             'token' => $entry->getToken()->getId(),
             'created_at' => $entry->getCreatedAt(true),
             'updated_at' => $entry->getUpdatedAt(true),

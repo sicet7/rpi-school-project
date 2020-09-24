@@ -24,9 +24,39 @@ class Entry implements EntityInterface
     private string $id;
 
     /**
-     * @var array
+     * @var string
      */
-    private array $data;
+    private string $sound;
+
+    /**
+     * @var string
+     */
+    private string $temp;
+
+    /**
+     * @var string
+     */
+    private string $light;
+
+    /**
+     * @var string
+     */
+    private string $humidity;
+
+    /**
+     * @var string
+     */
+    private string $celsius;
+
+    /**
+     * @var string
+     */
+    private string $fahrenheit;
+
+    /**
+     * @var string
+     */
+    private string $kelvin;
 
     /**
      * @var Token
@@ -43,14 +73,11 @@ class Entry implements EntityInterface
      */
     private ?DateTimeInterface $updated_at = null;
 
-    public function __construct(Token $token, ?array $data = null)
+    public function __construct(Token $token)
     {
         $this->id = Uuid::uuid4()->toString();
-        $this->created_at = new \DateTimeImmutable('now');
         $this->token = $token;
-        if ($data !== null) {
-            $this->data = $data;
-        }
+        $this->setCreatedAt();
     }
 
     /**
@@ -62,20 +89,134 @@ class Entry implements EntityInterface
     }
 
     /**
-     * @return array
+     * @return string
      */
-    public function getData(): array
+    public function getSound(): string
     {
-        return $this->data;
+        return $this->sound;
     }
 
     /**
-     * @param array $data
+     * @param string $sound
      * @return Entry
      */
-    public function setData(array $data): Entry
+    public function setSound(string $sound): Entry
     {
-        $this->data = $data;
+        $this->sound = $sound;
+        $this->setUpdatedAt();
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTemp(): string
+    {
+        return $this->temp;
+    }
+
+    /**
+     * @param string $temp
+     * @return Entry
+     */
+    public function setTemp(string $temp): Entry
+    {
+        $this->temp = $temp;
+        $this->setUpdatedAt();
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLight(): string
+    {
+        return $this->light;
+    }
+
+    /**
+     * @param string $light
+     * @return Entry
+     */
+    public function setLight(string $light): Entry
+    {
+        $this->light = $light;
+        $this->setUpdatedAt();
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getHumidity(): string
+    {
+        return $this->humidity;
+    }
+
+    /**
+     * @param string $humidity
+     * @return Entry
+     */
+    public function setHumidity(string $humidity): Entry
+    {
+        $this->humidity = $humidity;
+        $this->setUpdatedAt();
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCelsius(): string
+    {
+        return $this->celsius;
+    }
+
+    /**
+     * @param string $celsius
+     * @return Entry
+     */
+    public function setCelsius(string $celsius): Entry
+    {
+        $this->celsius = $celsius;
+        $this->setUpdatedAt();
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFahrenheit(): string
+    {
+        return $this->fahrenheit;
+    }
+
+    /**
+     * @param string $fahrenheit
+     * @return Entry
+     */
+    public function setFahrenheit(string $fahrenheit): Entry
+    {
+        $this->fahrenheit = $fahrenheit;
+        $this->setUpdatedAt();
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getKelvin(): string
+    {
+        return $this->kelvin;
+    }
+
+    /**
+     * @param string $kelvin
+     * @return Entry
+     */
+    public function setKelvin(string $kelvin): Entry
+    {
+        $this->kelvin = $kelvin;
         $this->setUpdatedAt();
         return $this;
     }
@@ -112,6 +253,20 @@ class Entry implements EntityInterface
     }
 
     /**
+     * @param DateTimeInterface|null $dateTime
+     * @return Entry
+     */
+    public function setCreatedAt(?DateTimeInterface $dateTime = null): Entry
+    {
+        if ($dateTime === null) {
+            $this->created_at = new \DateTimeImmutable('now');
+        } else {
+            $this->created_at = $dateTime;
+        }
+        return $this;
+    }
+
+    /**
      * @param bool $format
      * @return DateTimeInterface|string|null
      */
@@ -124,11 +279,16 @@ class Entry implements EntityInterface
     }
 
     /**
+     * @param DateTimeInterface|null $dateTime
      * @return Entry
      */
-    public function setUpdatedAt(): Entry
+    public function setUpdatedAt(?DateTimeInterface $dateTime = null): Entry
     {
-        $this->updated_at = new \DateTimeImmutable('now');
+        if ($dateTime === null) {
+            $this->updated_at = new \DateTimeImmutable('now');
+        } else {
+            $this->updated_at = $dateTime;
+        }
         return $this;
     }
 
@@ -146,11 +306,35 @@ class Entry implements EntityInterface
             ->setCustomIdGenerator(UuidGenerator::class)
             ->build();
 
-        $builder->createField('data', 'json')
+        $builder->addManyToOne('token', Token::class, 'id');
+
+        $builder->createField('sound', 'decimal')
             ->nullable(false)
             ->build();
 
-        $builder->addManyToOne('token', Token::class, 'id');
+        $builder->createField('temp', 'decimal')
+            ->nullable(false)
+            ->build();
+
+        $builder->createField('light', 'decimal')
+            ->nullable(false)
+            ->build();
+
+        $builder->createField('humidity', 'decimal')
+            ->nullable(false)
+            ->build();
+
+        $builder->createField('celsius', 'decimal')
+            ->nullable(false)
+            ->build();
+
+        $builder->createField('fahrenheit', 'decimal')
+            ->nullable(false)
+            ->build();
+
+        $builder->createField('kelvin', 'decimal')
+            ->nullable(false)
+            ->build();
 
         $builder->createField('created_at', 'datetimetz_immutable')
             ->nullable(false)

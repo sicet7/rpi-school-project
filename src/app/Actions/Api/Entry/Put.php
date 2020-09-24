@@ -4,68 +4,68 @@ declare(strict_types=1);
 
 namespace App\Actions\Api\Entry;
 
-use App\Database\Entities\Entry;
 use App\Database\Repositories\EntryRepository;
 use App\Interfaces\ActionInterface;
 use App\Middleware\TokenMiddleware;
 use App\Utility\BodyValidator;
-use App\Utility\CurrentToken;
 use App\Utility\Json;
 use Nyholm\Psr7\Stream;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Respect\Validation\Exceptions\NestedValidationException;
-use Respect\Validation\Exceptions\ValidationException;
 use Respect\Validation\Validator;
 use Slim\Interfaces\RouteCollectorInterface;
 
-class Post implements ActionInterface
+class Put implements ActionInterface
 {
-
-    /**
-     * @var Json
-     */
-    private Json $json;
-
-    /**
-     * @var CurrentToken
-     */
-    private CurrentToken $currentToken;
 
     /**
      * @var EntryRepository
      */
     private EntryRepository $entryRepository;
 
-    public function __construct(Json $json, CurrentToken $currentToken, EntryRepository $entryRepository)
+    /**
+     * @var Json
+     */
+    private Json $json;
+
+    public function __construct(EntryRepository $entryRepository, Json $json)
     {
-        $this->json = $json;
-        $this->currentToken = $currentToken;
         $this->entryRepository = $entryRepository;
+        $this->json = $json;
     }
 
     public static function register(RouteCollectorInterface $routeCollector): void
     {
-        $routeCollector->map(['POST'], '/api/entry', static::class)
+        $routeCollector->map(['PUT'], '/api/entry/{id}', static::class)
             ->add(TokenMiddleware::class);
     }
-
 
     public function __invoke(RequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         try {
-            if (!$this->currentToken->isset()) {
-                throw new \Exception('Token is not set.');
-            }
+            Validator::allOf(
+                Validator::arrayType(),
+                Validator::notEmpty(),
+                Validator::keySet(
+                    Validator::key('id', Validator::allOf(
+                        Validator::stringType(),
+                        Validator::notEmpty(),
+                        Validator::uuid(4)
+                    ))
+                )
+            )->check($args);
 
-            $token = $this->currentToken->get();
+            $id = $args['id'];
+
+            $entry = $this->entryRepository->getById($id);
+
             $request->getBody()->rewind();
             $bodyString = $request->getBody()->getContents();
+
             Validator::json()->check($bodyString);
             $data = array_change_key_case($this->json->decode($bodyString), CASE_LOWER);
-            BodyValidator::validatePost($data);
-
-            $entry = new Entry($token);
+            BodyValidator::validatePut($data);
 
             $entry->setSound($data['sound']);
             $entry->setTemp($data['temp']);

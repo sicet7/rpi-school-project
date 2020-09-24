@@ -7,6 +7,7 @@ namespace App\Middleware;
 use App\Database\Entities\Token;
 use App\Database\Repositories\TokenRepository;
 use App\Utility\CurrentToken;
+use Doctrine\ORM\Query\QueryException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -39,7 +40,7 @@ class TokenMiddleware implements MiddlewareInterface
      * @param RequestHandlerInterface $handler
      * @return ResponseInterface
      * @throws HttpUnauthorizedException
-     * @throws HttpBadRequestException
+     * @throws HttpBadRequestException|QueryException
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
@@ -51,16 +52,13 @@ class TokenMiddleware implements MiddlewareInterface
             throw new HttpBadRequestException($request, 'Bad request. Empty "' . static::HEADER . '" header.');
         }
 
-        /*var_dump(Uuid::uuid4()->toString());
-        die;*/
-
         foreach ($authHeader as $line) {
             $parts = preg_split('/\s+/', $line);
             if ($parts !== false && !empty($parts)) {
                 $type = $parts[array_keys($parts)[0]];
                 $value = $parts[array_keys($parts)[1]];
                 if (strtolower($type) == 'bearer') {
-                    $token = $this->tokenRepository->findByValue($value, false);
+                    $token = $this->tokenRepository->findByValue($value);
                     if ($token instanceof Token) {
                         $this->currentToken->set($token);
                         return $handler->handle($request);

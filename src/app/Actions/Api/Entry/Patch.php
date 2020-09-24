@@ -7,6 +7,7 @@ namespace App\Actions\Api\Entry;
 use App\Database\Repositories\EntryRepository;
 use App\Interfaces\ActionInterface;
 use App\Middleware\TokenMiddleware;
+use App\Utility\BodyValidator;
 use App\Utility\Json;
 use Nyholm\Psr7\Stream;
 use Psr\Http\Message\RequestInterface;
@@ -15,7 +16,7 @@ use Respect\Validation\Exceptions\NestedValidationException;
 use Respect\Validation\Validator;
 use Slim\Interfaces\RouteCollectorInterface;
 
-class PatchAndPut implements ActionInterface
+class Patch implements ActionInterface
 {
 
     /**
@@ -40,7 +41,7 @@ class PatchAndPut implements ActionInterface
 
     public static function register(RouteCollectorInterface $routeCollector): void
     {
-        $routeCollector->map(['PATCH', 'PUT'], '/api/entry/{id}', static::class)
+        $routeCollector->map(['PATCH'], '/api/entry/{id}', static::class)
             ->add(TokenMiddleware::class);
     }
 
@@ -67,32 +68,54 @@ class PatchAndPut implements ActionInterface
             $bodyString = $request->getBody()->getContents();
 
             Validator::json()->check($bodyString);
-            $data = $this->json->decode($bodyString);
-            Validator::allOf(
-                Validator::arrayType(),
-                Validator::notEmpty()
-            )->check($data);
+            $data = array_change_key_case($this->json->decode($bodyString), CASE_LOWER);
+            BodyValidator::validatePatch($data);
 
-            if (strtolower($request->getMethod()) == 'put') {
-                $newData = $data;
-            } else {
-                $newData = array_replace_recursive($entry->getData(), $data);
+            if (isset($data['sound'])) {
+                $entry->setSound($data['sound']);
             }
 
-            $entry->setData($newData);
+            if (isset($data['temp'])) {
+                $entry->setTemp($data['temp']);
+            }
+
+            if (isset($data['light'])) {
+                $entry->setLight($data['light']);
+            }
+
+            if (isset($data['humidity'])) {
+                $entry->setHumidity($data['humidity']);
+            }
+
+            if (isset($data['celsius'])) {
+                $entry->setCelsius($data['celsius']);
+            }
+
+            if (isset($data['fahrenheit'])) {
+                $entry->setFahrenheit($data['fahrenheit']);
+            }
+
+            if (isset($data['kelvin'])) {
+                $entry->setKelvin($data['kelvin']);
+            }
+
             $this->entryRepository->persist($entry);
             $this->entryRepository->flush();
 
             //FIXME: this is not ideal, but this was made quickly.
-            return $response->withStatus(200)->withBody(Stream::create(
-                $this->json->encode([
-                    'id' => $entry->getId(),
-                    'data' => $entry->getData(),
-                    'token' => $entry->getToken()->getId(),
-                    'created_at' => $entry->getCreatedAt(true),
-                    'updated_at' => $entry->getUpdatedAt(true),
-                ])
-            ));
+            return $response->withStatus(200)->withBody(Stream::create($this->json->encode([
+                'id' => $entry->getId(),
+                'sound' => $entry->getSound(),
+                'temp' => $entry->getTemp(),
+                'light' => $entry->getLight(),
+                'humidity' => $entry->getHumidity(),
+                'celsius' => $entry->getCelsius(),
+                'fahrenheit' => $entry->getFahrenheit(),
+                'kelvin' => $entry->getKelvin(),
+                'token' => $entry->getToken()->getId(),
+                'created_at' => $entry->getCreatedAt(true),
+                'updated_at' => $entry->getUpdatedAt(true),
+            ])));
         } catch (\Throwable $throwable) {
             $message = $throwable->getMessage();
             if ($throwable instanceof NestedValidationException) {
