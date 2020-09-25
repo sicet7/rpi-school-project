@@ -104,7 +104,7 @@ class All implements ActionInterface
     {
         return [
             'id' => $entry->getId(),
-            'sound' => $entry->getSound(true),
+            'sound' => "{$entry->getSound(true)}",
             'temp' => $entry->getTemp(),
             'light' => $entry->getLight(),
             'humidity' => $entry->getHumidity(),
