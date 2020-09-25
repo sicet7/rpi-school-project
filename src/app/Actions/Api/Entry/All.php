@@ -106,7 +106,7 @@ class All implements ActionInterface
             'id' => $entry->getId(),
             'sound' => $entry->getSound(true),
             'temp' => $entry->getTemp(),
-            'light' => $entry->getLight(true),
+            'light' => $entry->getLight(),
             'humidity' => $entry->getHumidity(),
             'celsius' => $entry->getCelsius(),
             'fahrenheit' => $entry->getFahrenheit(),

@@ -95,7 +95,7 @@ class Entry implements EntityInterface
     public function getSound(bool $format = false): string
     {
         if ($format) {
-            return (string) (($this->sound/65535)*1000);
+            return (string) ($this->sound/65535);
         }
         return (string) $this->sound;
     }
@@ -131,14 +131,10 @@ class Entry implements EntityInterface
     }
 
     /**
-     * @param bool $format
      * @return string
      */
-    public function getLight(bool $format = false): string
+    public function getLight(): string
     {
-        if ($format) {
-            return (string) (((float)$this->light)*100);
-        }
         return $this->light;
     }
 
