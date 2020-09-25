@@ -90,14 +90,14 @@ class Entry implements EntityInterface
 
     /**
      * @param bool $format
-     * @return int|float
+     * @return string
      */
-    public function getSound(bool $format = false)
+    public function getSound(bool $format = false): string
     {
         if ($format) {
-            return (float) ($this->sound/65535);
+            return (string) (($this->sound/65535)*1000);
         }
-        return $this->sound;
+        return (string) $this->sound;
     }
 
     /**
@@ -112,10 +112,19 @@ class Entry implements EntityInterface
     }
 
     /**
+     * @param bool $format
      * @return string
      */
-    public function getTemp(): string
+    public function getTemp(bool $format = false): string
     {
+        if ($format) {
+            $n = (float) $this->temp;
+            $b = 4275;
+            $r0 = 100000;
+            $r = (1023.0/$n-1.0)*$r0;
+            $t = 1.0/(log($r/$r0)/$b+1/298.15)-273.15;
+            return (string) $t;
+        }
         return $this->temp;
     }
 
@@ -131,10 +140,14 @@ class Entry implements EntityInterface
     }
 
     /**
+     * @param bool $format
      * @return string
      */
-    public function getLight(): string
+    public function getLight(bool $format = false): string
     {
+        if ($format) {
+            return (string) (((float)$this->light)*100);
+        }
         return $this->light;
     }
 
