@@ -2,7 +2,8 @@
 
 {% block body %}
     <div class="container">
-        <canvas id="myChart"></canvas>
+        <canvas id="analogChart"></canvas>
+        <canvas id="digitalChart"></canvas>
     </div>
 {% endblock %}
 
@@ -10,22 +11,28 @@
     {{ parent() }}
     <script type="text/javascript">
         var ctx = null;
-        var myChart = null;
+        var myCharts = [];
         var interval = null;
-        var myChartConfig = {
+        var analogChartConfig = {
             type: 'line',
             data: {
                 datasets: [
                     {
                         label: 'sound',
+                        fill: false,
+                        borderColor: 'red',
                         data: []
                     },
                     {
                         label: 'temp',
+                        fill: false,
+                        borderColor: 'green',
                         data: []
                     },
                     {
                         label: 'light',
+                        fill: false,
+                        borderColor: 'blue',
                         data: []
                     }
                 ]
@@ -39,6 +46,49 @@
                 title: {
                     display: true,
                     text: 'Analog Data'
+                },
+            }
+        };
+
+        var digitalChartConfig = {
+            type: 'line',
+            data: {
+                datasets: [
+                    {
+                        label: 'humidity',
+                        fill: false,
+                        borderColor: 'blue',
+                        data: []
+                    },
+                    {
+                        label: 'celsius',
+                        fill: false,
+                        borderColor: 'red',
+                        data: []
+                    },
+                    {
+                        label: 'fahrenheit',
+                        fill: false,
+                        borderColor: 'green',
+                        data: []
+                    },
+                    {
+                        label: 'kelvin',
+                        fill: false,
+                        borderColor: 'yellow',
+                        data: []
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    xAxes: [{
+                        type: 'time'
+                    }]
+                },
+                title: {
+                    display: true,
+                    text: 'Digital Data'
                 },
             }
         };
@@ -86,7 +136,7 @@
             return true;
         }
         function getAndApplyData() {
-            if (!(myChart instanceof Chart)) {
+            if (myCharts.length === 0) {
                 return;
             }
             fetch(dataSource).then((response) => {
@@ -101,36 +151,42 @@
                         return;
                     }
 
-                    //reset data
-                    var datasetKeys = Object.keys(myChart.data.datasets);
-                    for(var t = 0; t < datasetKeys.length; t++) {
-                        myChart.data.datasets[datasetKeys[t]].data = [];
-                    }
+                    var chartKeys = Object.keys(myCharts);
+                    for(var j = 0; j < chartKeys.length; j++) {
+                        var myChart = myCharts[chartKeys[j]];
 
-                    var aKeys = Object.keys(json.data).reverse();
-                    for (var i = 0; i < aKeys.length; i++) {
-                        var k = aKeys[i];
-                        var v = json.data[k];
-                        if (!validData(v)) {
-                            continue;
+                        //reset data
+                        var datasetKeys = Object.keys(myChart.data.datasets);
+                        for(var t = 0; t < datasetKeys.length; t++) {
+                            myChart.data.datasets[datasetKeys[t]].data = [];
                         }
 
-                        for(t = 0; t < datasetKeys.length; t++) {
-                            var label = myChart.data.datasets[datasetKeys[t]].label;
-                            if (typeof v[label] === 'undefined') {
+                        var aKeys = Object.keys(json.data).reverse();
+                        for (var i = 0; i < aKeys.length; i++) {
+                            var k = aKeys[i];
+                            var v = json.data[k];
+                            if (!validData(v)) {
                                 continue;
                             }
 
-                            myChart.data.datasets[datasetKeys[t]].data.push({
-                                t: new Date(v['created_at']),
-                                y: parseFloat(v[label])
-                            });
-                        }
+                            for(t = 0; t < datasetKeys.length; t++) {
+                                var label = myChart.data.datasets[datasetKeys[t]].label;
+                                if (typeof v[label] === 'undefined') {
+                                    continue;
+                                }
 
-                        console.log();
+                                myChart.data.datasets[datasetKeys[t]].data.push({
+                                    t: new Date(v['created_at']),
+                                    y: parseFloat(v[label])
+                                });
+                            }
+
+                            console.log();
+                        }
+                        myChart.update();
+                        console.debug('Data Updated.');
+
                     }
-                    myChart.update();
-                    console.debug('Data Updated.');
                     if (interval === null) {
                         interval = setInterval(getAndApplyData, 5000);
                     }
@@ -143,12 +199,12 @@
 
         }
         document.addEventListener('DOMContentLoaded', function(){
-            if (ctx === null) {
-                ctx = document.getElementById('myChart');
-                if (myChart === null) {
-                    myChart = new Chart(ctx, myChartConfig);
-                }
+
+            if (myCharts.length === 0) {
+                myCharts.push(new Chart(document.getElementById('analogChart'), analogChartConfig));
+                myCharts.push(new Chart(document.getElementById('digitalChart'), digitalChartConfig));
             }
+
             getAndApplyData();
         });
     </script>
