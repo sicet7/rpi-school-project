@@ -112,19 +112,10 @@ class Entry implements EntityInterface
     }
 
     /**
-     * @param bool $format
      * @return string
      */
-    public function getTemp(bool $format = false): string
+    public function getTemp(): string
     {
-        if ($format) {
-            $n = (float) $this->temp;
-            $b = 4275;
-            $r0 = 100000;
-            $r = (1023.0/$n-1.0)*$r0;
-            $t = 1.0/(log($r/$r0)/$b+1/298.15)-273.15;
-            return (string) $t;
-        }
         return $this->temp;
     }
 
