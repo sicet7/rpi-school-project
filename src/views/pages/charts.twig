@@ -1,0 +1,155 @@
+{% extends "base.twig" %}
+
+{% block body %}
+    <div class="container">
+        <canvas id="myChart"></canvas>
+    </div>
+{% endblock %}
+
+{% block head %}
+    {{ parent() }}
+    <script type="text/javascript">
+        var ctx = null;
+        var myChart = null;
+        var interval = null;
+        var myChartConfig = {
+            type: 'line',
+            data: {
+                datasets: [
+                    {
+                        label: 'sound',
+                        data: []
+                    },
+                    {
+                        label: 'temp',
+                        data: []
+                    },
+                    {
+                        label: 'light',
+                        data: []
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    xAxes: [{
+                        type: 'time'
+                    }]
+                },
+                title: {
+                    display: true,
+                    text: 'Analog Data'
+                },
+            }
+        };
+        var dataSource = location.href + "api/entry?orderby=created_at&direction=desc&skip=0&take=50";
+        function isNumeric(n) {
+            return !isNaN(parseFloat(n)) && isFinite(n);
+        }
+        function validData(qData) {
+            if (typeof qData !== 'object') {
+                return false;
+            }
+            var keys = Object.keys(qData);
+            if (keys.indexOf('created_at') === -1 || typeof qData['created_at'] !== 'string') {
+                return false;
+            }
+            if (keys.indexOf('sound') === -1 || typeof qData['sound'] !== 'string' || !isNumeric(qData['sound'])) {
+                return false;
+            }
+            if (keys.indexOf('temp') === -1 || typeof qData['temp'] !== 'string' || !isNumeric(qData['temp'])) {
+                return false;
+            }
+            if (keys.indexOf('light') === -1 || typeof qData['light'] !== 'string' || !isNumeric(qData['light'])) {
+                return false;
+            }
+            if (keys.indexOf('humidity') === -1 ||
+                typeof qData['humidity'] !== 'string' ||
+                !isNumeric(qData['humidity'])) {
+                return false;
+            }
+            if (keys.indexOf('celsius') === -1 ||
+                typeof qData['celsius'] !== 'string' ||
+                !isNumeric(qData['celsius'])) {
+                return false;
+            }
+            if (keys.indexOf('fahrenheit') === -1 ||
+                typeof qData['fahrenheit'] !== 'string' ||
+                !isNumeric(qData['fahrenheit'])) {
+                return false;
+            }
+            if (keys.indexOf('kelvin') === -1 ||
+                typeof qData['kelvin'] !== 'string' ||
+                !isNumeric(qData['kelvin'])) {
+                return false;
+            }
+            return true;
+        }
+        function getAndApplyData() {
+            if (!(myChart instanceof Chart)) {
+                return;
+            }
+            fetch(dataSource).then((response) => {
+                if (response.status !== 200) {
+                    return;
+                }
+
+                response.json().then(json => {
+                    var keys = Object.keys(json);
+                    if (keys.indexOf('data') === -1 || (!Array.isArray(json.data) && typeof json.data !== 'object')) {
+                        console.error('Invalid data from remote.')
+                        return;
+                    }
+
+                    //reset data
+                    var datasetKeys = Object.keys(myChart.data.datasets);
+                    for(var t = 0; t < datasetKeys.length; t++) {
+                        myChart.data.datasets[datasetKeys[t]].data = [];
+                    }
+
+                    var aKeys = Object.keys(json.data).reverse();
+                    for (var i = 0; i < aKeys.length; i++) {
+                        var k = aKeys[i];
+                        var v = json.data[k];
+                        if (!validData(v)) {
+                            continue;
+                        }
+
+                        for(t = 0; t < datasetKeys.length; t++) {
+                            var label = myChart.data.datasets[datasetKeys[t]].label;
+                            if (typeof v[label] === 'undefined') {
+                                continue;
+                            }
+
+                            myChart.data.datasets[datasetKeys[t]].data.push({
+                                t: new Date(v['created_at']),
+                                y: parseFloat(v[label])
+                            });
+                        }
+
+                        console.log();
+                    }
+                    myChart.update();
+                    console.debug('Data Updated.');
+                    if (interval === null) {
+                        interval = setInterval(getAndApplyData, 5000);
+                    }
+                }).catch(reason => {
+                    console.error(reason);
+                })
+            }).catch(reason => {
+                console.error(reason);
+            });
+
+        }
+        document.addEventListener('DOMContentLoaded', function(){
+            if (ctx === null) {
+                ctx = document.getElementById('myChart');
+                if (myChart === null) {
+                    myChart = new Chart(ctx, myChartConfig);
+                }
+            }
+            getAndApplyData();
+        });
+    </script>
+{% endblock %}
