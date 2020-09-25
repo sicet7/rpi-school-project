@@ -17,7 +17,6 @@ use Slim\Interfaces\RouteCollectorInterface;
 
 class All implements ActionInterface
 {
-    private bool $normalize = false;
     /**
      * @var EntryRepository
      */
@@ -70,10 +69,6 @@ class All implements ActionInterface
                 }
             }
 
-            if ($output['normalize'] == 'true') {
-                $this->normalize = true;
-            }
-
             $entries = $this->entryRepository->getList($criteria);
 
             $returnArray = [];
@@ -109,7 +104,7 @@ class All implements ActionInterface
     {
         return [
             'id' => $entry->getId(),
-            'sound' => $entry->getSound(),
+            'sound' => $entry->getSound(true),
             'temp' => $entry->getTemp(),
             'light' => $entry->getLight(),
             'humidity' => $entry->getHumidity(),
