@@ -24,9 +24,9 @@ class Entry implements EntityInterface
     private string $id;
 
     /**
-     * @var string
+     * @var int
      */
-    private string $sound;
+    private int $sound;
 
     /**
      * @var string
@@ -89,18 +89,22 @@ class Entry implements EntityInterface
     }
 
     /**
-     * @return string
+     * @param bool $format
+     * @return int|float
      */
-    public function getSound(): string
+    public function getSound(bool $format = false)
     {
+        if ($format) {
+            return (float) ($this->sound/65535);
+        }
         return $this->sound;
     }
 
     /**
-     * @param string $sound
+     * @param int $sound
      * @return Entry
      */
-    public function setSound(string $sound): Entry
+    public function setSound(int $sound): Entry
     {
         $this->sound = $sound;
         $this->setUpdatedAt();
@@ -308,7 +312,7 @@ class Entry implements EntityInterface
 
         $builder->addManyToOne('token', Token::class, 'id');
 
-        $builder->createField('sound', 'decimal')
+        $builder->createField('sound', 'integer')
             ->nullable(false)
             ->build();
 
