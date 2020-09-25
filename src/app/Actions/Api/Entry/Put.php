@@ -67,7 +67,7 @@ class Put implements ActionInterface
             $data = array_change_key_case($this->json->decode($bodyString), CASE_LOWER);
             BodyValidator::validatePut($data);
 
-            $entry->setSound($data['sound']);
+            $entry->setSound((int)$data['sound']);
             $entry->setTemp($data['temp']);
             $entry->setLight($data['light']);
             $entry->setHumidity($data['humidity']);

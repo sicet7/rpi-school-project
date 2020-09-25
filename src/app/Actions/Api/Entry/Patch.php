@@ -72,7 +72,7 @@ class Patch implements ActionInterface
             BodyValidator::validatePatch($data);
 
             if (isset($data['sound'])) {
-                $entry->setSound($data['sound']);
+                $entry->setSound((int)$data['sound']);
             }
 
             if (isset($data['temp'])) {

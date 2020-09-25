@@ -13,12 +13,11 @@ use Nyholm\Psr7\Stream;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Respect\Validation\Exceptions\NestedValidationException;
-use Respect\Validation\Validator;
 use Slim\Interfaces\RouteCollectorInterface;
 
 class All implements ActionInterface
 {
-
+    private bool $normalize = false;
     /**
      * @var EntryRepository
      */
@@ -69,6 +68,10 @@ class All implements ActionInterface
                 } else {
                     $criteria->orderBy([$output['orderby'] => Criteria::ASC]);
                 }
+            }
+
+            if ($output['normalize'] == 'true') {
+                $this->normalize = true;
             }
 
             $entries = $this->entryRepository->getList($criteria);
