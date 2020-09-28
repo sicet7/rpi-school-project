@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-$file = __DIR__ . '/ssl.crt';
+$file = __DIR__ . '/rootSsl.crt';
 
 if (!file_exists($file)) {
     echo 'Failed to find CRT file' . PHP_EOL;

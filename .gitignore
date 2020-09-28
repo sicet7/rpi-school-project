@@ -6,3 +6,6 @@ src/.env
 ssl.key
 ssl.crt
 ssl.pem
+rootSsl.crt
+rootSsl.key
+rootSsl.srl
