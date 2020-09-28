@@ -3,3 +3,6 @@ data/
 src/vendor
 src/var
 src/.env
+ssl.key
+ssl.crt
+ssl.pem
