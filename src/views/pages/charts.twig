@@ -2,6 +2,7 @@
 
 {% block body %}
     <div class="container">
+        <input type="number" name="amount" onkeyup="setAmount(this)" value="50"/>
         <canvas id="analogChart"></canvas>
         <canvas id="digitalChart"></canvas>
     </div>
@@ -10,6 +11,8 @@
 {% block head %}
     {{ parent() }}
     <script type="text/javascript">
+        var rawSource = location.href + "api/entry?orderby=created_at&direction=desc&skip=0&take=";
+        var dataSource = rawSource + "50";
         var ctx = null;
         var myCharts = [];
         var interval = null;
@@ -92,7 +95,22 @@
                 },
             }
         };
-        var dataSource = location.href + "api/entry?orderby=created_at&direction=desc&skip=0&take=50";
+        function setAmount(e) {
+            var value = e;
+            if (value instanceof HTMLInputElement) {
+                value = e.value;
+            }
+            if (!isNumeric(value)) {
+                return;
+            }
+            if (parseInt(value) < 10) {
+                return;
+            }
+            if (parseInt(value) > 500) {
+                return;
+            }
+            dataSource = rawSource + value;
+        }
         function isNumeric(n) {
             return !isNaN(parseFloat(n)) && isFinite(n);
         }

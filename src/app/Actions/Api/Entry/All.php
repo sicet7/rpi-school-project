@@ -13,6 +13,7 @@ use Nyholm\Psr7\Stream;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Respect\Validation\Exceptions\NestedValidationException;
+use Respect\Validation\Validator;
 use Slim\Interfaces\RouteCollectorInterface;
 
 class All implements ActionInterface
@@ -67,6 +68,10 @@ class All implements ActionInterface
                 } else {
                     $criteria->orderBy([$output['orderby'] => Criteria::ASC]);
                 }
+            }
+
+            if (isset($output['token']) && Validator::uuid(4)->validate($output['token'])) {
+                $criteria->where(Criteria::expr()->eq('token', $output['token']));
             }
 
             $entries = $this->entryRepository->getList($criteria);
