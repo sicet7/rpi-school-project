@@ -15,10 +15,13 @@ use Nyholm\Psr7\Stream;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Respect\Validation\Exceptions\NestedValidationException;
-use Respect\Validation\Exceptions\ValidationException;
 use Respect\Validation\Validator;
 use Slim\Interfaces\RouteCollectorInterface;
 
+/**
+ * Class Post
+ * @package App\Actions\Api\Entry
+ */
 class Post implements ActionInterface
 {
 
@@ -37,6 +40,12 @@ class Post implements ActionInterface
      */
     private EntryRepository $entryRepository;
 
+    /**
+     * Post constructor.
+     * @param Json $json
+     * @param CurrentToken $currentToken
+     * @param EntryRepository $entryRepository
+     */
     public function __construct(Json $json, CurrentToken $currentToken, EntryRepository $entryRepository)
     {
         $this->json = $json;
@@ -44,13 +53,18 @@ class Post implements ActionInterface
         $this->entryRepository = $entryRepository;
     }
 
+    /**
+     * @inheritDoc
+     */
     public static function register(RouteCollectorInterface $routeCollector): void
     {
         $routeCollector->map(['POST'], '/api/entry', static::class)
             ->add(TokenMiddleware::class);
     }
 
-
+    /**
+     * @inheritDoc
+     */
     public function __invoke(RequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         try {

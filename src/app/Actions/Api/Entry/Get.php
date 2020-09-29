@@ -14,6 +14,10 @@ use Respect\Validation\Exceptions\NestedValidationException;
 use Respect\Validation\Validator;
 use Slim\Interfaces\RouteCollectorInterface;
 
+/**
+ * Class Get
+ * @package App\Actions\Api\Entry
+ */
 class Get implements ActionInterface
 {
 

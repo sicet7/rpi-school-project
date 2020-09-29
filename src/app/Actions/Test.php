@@ -18,7 +18,7 @@ class Test implements ActionInterface
 {
 
     /**
-     * @param RouteCollectorInterface $routeCollector
+     * @inheritDoc
      */
     public static function register(RouteCollectorInterface $routeCollector): void
     {
@@ -26,10 +26,7 @@ class Test implements ActionInterface
     }
 
     /**
-     * @param RequestInterface $request
-     * @param ResponseInterface $response
-     * @param array $args
-     * @return ResponseInterface
+     * @inheritDoc
      */
     public function __invoke(RequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {

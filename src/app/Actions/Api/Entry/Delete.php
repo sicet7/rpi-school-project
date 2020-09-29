@@ -14,6 +14,10 @@ use Respect\Validation\Exceptions\NestedValidationException;
 use Respect\Validation\Validator;
 use Slim\Interfaces\RouteCollectorInterface;
 
+/**
+ * Class Delete
+ * @package App\Actions\Api\Entry
+ */
 class Delete implements ActionInterface
 {
 
@@ -22,6 +26,10 @@ class Delete implements ActionInterface
      */
     private EntryRepository $entryRepository;
 
+    /**
+     * Delete constructor.
+     * @param EntryRepository $entryRepository
+     */
     public function __construct(EntryRepository $entryRepository)
     {
         $this->entryRepository = $entryRepository;

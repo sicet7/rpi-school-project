@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace App\Utility;
 
+use Respect\Validation\Exceptions\ValidationException;
 use Respect\Validation\Validator;
 
 class BodyValidator
 {
 
+    /**
+     * @param array $data
+     * @throws ValidationException
+     */
     public static function validatePost(array $data): void
     {
         $data = array_change_key_case($data, CASE_LOWER);
@@ -37,11 +42,19 @@ class BodyValidator
         )->check($data);
     }
 
+    /**
+     * @param array $data
+     * @throws ValidationException
+     */
     public static function validatePut(array $data): void
     {
         static::validatePost($data);
     }
 
+    /**
+     * @param array $data
+     * @throws ValidationException
+     */
     public static function validatePatch(array $data): void
     {
         $data = array_change_key_case($data, CASE_LOWER);

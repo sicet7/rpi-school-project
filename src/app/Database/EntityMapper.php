@@ -47,9 +47,7 @@ class EntityMapper implements MappingDriverInterface
     }
 
     /**
-     * @param string $className
-     * @param ClassMetadata $metadata
-     * @throws EntityMapperException
+     * @inheritDoc
      */
     public function loadMetadataForClass($className, ClassMetadata $metadata)
     {
@@ -70,7 +68,7 @@ class EntityMapper implements MappingDriverInterface
     }
 
     /**
-     * @return string[]
+     * @inheritDoc
      */
     public function getAllClassNames()
     {
@@ -102,8 +100,7 @@ class EntityMapper implements MappingDriverInterface
     }
 
     /**
-     * @param string $className
-     * @return bool
+     * @inheritDoc
      */
     public function isTransient($className)
     {

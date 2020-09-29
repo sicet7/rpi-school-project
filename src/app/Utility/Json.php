@@ -4,13 +4,30 @@ declare(strict_types=1);
 
 namespace App\Utility;
 
+use JsonException;
 use Respect\Validation\Validator;
 
+/**
+ * Class Json
+ * @package App\Utility
+ */
 class Json
 {
+    /**
+     * @var int
+     */
     private int $encodeOptions;
+
+    /**
+     * @var int
+     */
     private int $decodeOptions;
 
+    /**
+     * Json constructor.
+     * @param int $encodeOptions
+     * @param int $decodeOptions
+     */
     public function __construct(int $encodeOptions = 0, int $decodeOptions = 0)
     {
         $this->encodeOptions = $encodeOptions;
@@ -20,7 +37,7 @@ class Json
     /**
      * @param array $data
      * @return string
-     * @throws \JsonException
+     * @throws JsonException
      */
     public function encode(array $data): string
     {
@@ -33,7 +50,7 @@ class Json
     /**
      * @param string $json
      * @return array
-     * @throws \JsonException
+     * @throws JsonException
      */
     public function decode(string $json): array
     {

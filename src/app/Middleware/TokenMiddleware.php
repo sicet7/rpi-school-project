@@ -12,10 +12,13 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Ramsey\Uuid\Uuid;
 use Slim\Exception\HttpBadRequestException;
 use Slim\Exception\HttpUnauthorizedException;
 
+/**
+ * Class TokenMiddleware
+ * @package App\Middleware
+ */
 class TokenMiddleware implements MiddlewareInterface
 {
     protected const HEADER = 'Authorization';
@@ -29,6 +32,11 @@ class TokenMiddleware implements MiddlewareInterface
      */
     private CurrentToken $currentToken;
 
+    /**
+     * TokenMiddleware constructor.
+     * @param TokenRepository $tokenRepository
+     * @param CurrentToken $currentToken
+     */
     public function __construct(TokenRepository $tokenRepository, CurrentToken $currentToken)
     {
         $this->tokenRepository = $tokenRepository;

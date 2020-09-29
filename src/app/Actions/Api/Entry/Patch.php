@@ -16,6 +16,10 @@ use Respect\Validation\Exceptions\NestedValidationException;
 use Respect\Validation\Validator;
 use Slim\Interfaces\RouteCollectorInterface;
 
+/**
+ * Class Patch
+ * @package App\Actions\Api\Entry
+ */
 class Patch implements ActionInterface
 {
 
@@ -39,12 +43,18 @@ class Patch implements ActionInterface
         $this->json = $json;
     }
 
+    /**
+     * @inheritDoc
+     */
     public static function register(RouteCollectorInterface $routeCollector): void
     {
         $routeCollector->map(['PATCH'], '/api/entry/{id}', static::class)
             ->add(TokenMiddleware::class);
     }
 
+    /**
+     * @inheritDoc
+     */
     public function __invoke(RequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         try {

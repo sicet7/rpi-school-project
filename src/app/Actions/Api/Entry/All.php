@@ -16,6 +16,10 @@ use Respect\Validation\Exceptions\NestedValidationException;
 use Respect\Validation\Validator;
 use Slim\Interfaces\RouteCollectorInterface;
 
+/**
+ * Class All
+ * @package App\Actions\Api\Entry
+ */
 class All implements ActionInterface
 {
     /**
@@ -27,17 +31,28 @@ class All implements ActionInterface
      */
     private Json $json;
 
+    /**
+     * All constructor.
+     * @param EntryRepository $entryRepository
+     * @param Json $json
+     */
     public function __construct(EntryRepository $entryRepository, Json $json)
     {
         $this->entryRepository = $entryRepository;
         $this->json = $json;
     }
 
+    /**
+     * @inheritDoc
+     */
     public static function register(RouteCollectorInterface $routeCollector): void
     {
         $routeCollector->map(['GET'], '/api/entry', static::class);
     }
 
+    /**
+     * @inheritDoc
+     */
     public function __invoke(RequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         try {

@@ -6,6 +6,10 @@ namespace App\Utility;
 
 use App\Database\Entities\Token;
 
+/**
+ * Class CurrentToken
+ * @package App\Utility
+ */
 class CurrentToken
 {
 

@@ -11,6 +11,10 @@ use Psr\Http\Message\ResponseInterface;
 use Slim\Interfaces\RouteCollectorInterface;
 use Twig\Environment;
 
+/**
+ * Class Charts
+ * @package App\Actions
+ */
 class Charts implements ActionInterface
 {
 
@@ -19,16 +23,26 @@ class Charts implements ActionInterface
      */
     private Environment $twig;
 
+    /**
+     * Charts constructor.
+     * @param Environment $twig
+     */
     public function __construct(Environment $twig)
     {
         $this->twig = $twig;
     }
 
+    /**
+     * @inheritDoc
+     */
     public static function register(RouteCollectorInterface $routeCollector): void
     {
         $routeCollector->map(['GET'], '/', static::class);
     }
 
+    /**
+     * @inheritDoc
+     */
     public function __invoke(RequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         return $response->withStatus(200)
