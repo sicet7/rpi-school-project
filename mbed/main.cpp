@@ -14,13 +14,14 @@
 #include <Sicet7/TempSensor.h>
 #include <Sicet7/DhtThread.h>
 
-using namespace Sicet7;
-
+//Change these options
 #define MY_PATH "/api/entry"
 #define MY_SERVER "10.130.54.33"
 #define MY_AUTH_HEADER "bearer 0123456789"
-#define STOP_FLAG 1234
+#define WAIT_TIME 5000
 #define USE_HTTPS 0
+
+using namespace Sicet7;
 
 #if USE_HTTPS > 0
     #define MY_HTTP_HOST "https://" MY_SERVER MY_PATH
@@ -60,6 +61,8 @@ using namespace Sicet7;
     #define MY_HTTP_HOST "http://" MY_SERVER MY_PATH
 #endif
 
+#define STOP_FLAG 1234
+
 int main()
 {
     //Sensors
@@ -84,7 +87,7 @@ int main()
     while(true) {
         
         // Wait
-        ThisThread::sleep_for(5000);
+        ThisThread::sleep_for(WAIT_TIME);
         
         //Seperate console output.
         console->writeLine("-----------------------");
@@ -175,13 +178,11 @@ int main()
                 console->write("Return Code: ");
                 console->writeLine(To::String(res->get_status_code()));
             }
-            console->writeLine("Trying again in 5 seconds.");
         } else {
             console->write("HTTP request was successful and returned code: ");
             console->writeLine(To::String(res->get_status_code()));
             console->write("Payload: ");
             console->writeLine(payload);
-            console->writeLine("Next Payload will be sent in 5 seconds.");
         }
         
         //Clean up.
