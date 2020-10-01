@@ -32,10 +32,10 @@ services:
             - POSTGRES_PASSWORD=mypassword
         volumes:
             - ./data/database:/var/lib/postgresql/data
-    adminer:
-        image: adminer:4.7.7-standalone
-        restart: always
-        links:
-            - db
-        ports:
-            - 5000:8080
+    #adminer:
+        #image: adminer:4.7.7-standalone
+        #restart: always
+        #links:
+            #- db
+        #ports:
+            #- 5000:8080
