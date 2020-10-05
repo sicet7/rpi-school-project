@@ -16,7 +16,7 @@
 
 //Change these options
 #define MY_PATH "/api/entry"
-#define MY_SERVER "10.130.54.33"
+#define MY_SERVER "mart496g.sde.local"
 #define MY_AUTH_HEADER "bearer 0123456789"
 #define WAIT_TIME 5000
 #define USE_HTTPS 0
