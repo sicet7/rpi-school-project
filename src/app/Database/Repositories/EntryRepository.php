@@ -201,9 +201,8 @@ class EntryRepository implements RepositoryInterface
     public function getAverageCount(?Criteria $criteria = null): int
     {
         $queryBuilder = $this->getEntityManager()->createQueryBuilder();
-        $queryBuilder->select('COUNT(DISTINCT DATE(e.created_at)), DATE(e.created_at) as qDate');
+        $queryBuilder->select('COUNT(DISTINCT DATE(e.created_at))');
         $queryBuilder->from(static::ENTITY, 'e');
-        $queryBuilder->groupBy('qDate');
         if ($criteria instanceof Criteria) {
             $queryBuilder->addCriteria($criteria);
         }
