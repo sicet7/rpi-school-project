@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Database\Custom\Functions\Date;
+use App\Database\Custom\Functions\Round;
 use App\Database\EntityMapper;
 use App\Interfaces\FinderFactoryInterface;
 use App\Utility\ConfigManager;
@@ -33,6 +35,8 @@ return [
     DBALConfig::class => create(DBALConfig::class),
     ORMConfig::class => function (ConfigManager $configManager, MappingDriverInterface $mappingDriver) {
         $configuration = Setup::createConfiguration(!$configManager->get('mode.production'));
+        $configuration->addCustomStringFunction('ROUND', Round::class);
+        $configuration->addCustomStringFunction('DATE', Date::class);
         $configuration->setMetadataDriverImpl($mappingDriver);
         return $configuration;
     },

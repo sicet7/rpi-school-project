@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Database\Repositories;
 
 use App\Database\Entities\Entry;
+use App\DTO\EntryAverage;
 use App\Interfaces\RepositoryInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Criteria;
@@ -12,6 +13,7 @@ use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityNotFoundException;
 use Doctrine\ORM\NonUniqueResultException;
+use Doctrine\ORM\Query\Expr\OrderBy;
 use Doctrine\ORM\Query\QueryException;
 
 /**
@@ -147,6 +149,61 @@ class EntryRepository implements RepositoryInterface
         $queryBuilder = $this->getEntityManager()->createQueryBuilder();
         $queryBuilder->select('COUNT(e)');
         $queryBuilder->from(static::ENTITY, 'e');
+        if ($criteria instanceof Criteria) {
+            $queryBuilder->addCriteria($criteria);
+        }
+        $count = $queryBuilder->getQuery()->getOneOrNullResult();
+        if (is_array($count) && !empty($count)) {
+            $count = $count[array_keys($count)[0]];
+        }
+        if ($count !== null && is_numeric($count)) {
+            return (int) $count;
+        }
+        return 0;
+    }
+
+    /**
+     * @param Criteria|null $criteria
+     * @return ArrayCollection
+     * @throws QueryException
+     */
+    public function getAverage(?Criteria $criteria = null): ArrayCollection
+    {
+        $queryBuilder = $this->getEntityManager()->createQueryBuilder();
+        $queryBuilder->select(sprintf(
+            "NEW %s(COUNT(e), ROUND(AVG(e.sound)), AVG(e.temp), AVG(e.light), " .
+            "AVG(e.humidity), AVG(e.celsius), AVG(e.fahrenheit), AVG(e.kelvin), " .
+            "DATE(e.created_at)) as dto, DATE(e.created_at) as qDate",
+            EntryAverage::class
+        ));
+        $queryBuilder->from(static::ENTITY, 'e');
+        $queryBuilder->groupBy('qDate');
+        $queryBuilder->orderBy(new OrderBy('DATE(e.created_at)', 'DESC'));
+        if ($criteria instanceof Criteria) {
+            $queryBuilder->addCriteria($criteria);
+        }
+        $data = $queryBuilder->getQuery()->getResult(AbstractQuery::HYDRATE_OBJECT);
+        $rData = [];
+        foreach ($data as $e) {
+            if (isset($e['dto']) && $e['dto'] instanceof EntryAverage) {
+                $rData[] = $e['dto'];
+            }
+        }
+        return new ArrayCollection($rData);
+    }
+
+    /**
+     * @param Criteria|null $criteria
+     * @return int
+     * @throws NonUniqueResultException
+     * @throws QueryException
+     */
+    public function getAverageCount(?Criteria $criteria = null): int
+    {
+        $queryBuilder = $this->getEntityManager()->createQueryBuilder();
+        $queryBuilder->select('COUNT(DISTINCT DATE(e.created_at)), DATE(e.created_at) as qDate');
+        $queryBuilder->from(static::ENTITY, 'e');
+        $queryBuilder->groupBy('qDate');
         if ($criteria instanceof Criteria) {
             $queryBuilder->addCriteria($criteria);
         }
